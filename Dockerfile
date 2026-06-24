@@ -34,6 +34,9 @@ RUN if [ "${INSTALL_PLAYWRIGHT_BROWSERS}" = "1" ]; then \
 RUN mkdir -p /data/.openclaw /data/workspace /data/.config/openclaw \
   && chown -R node:node /data
 
+COPY --chown=node:node scripts /opt/openclaw-deploy/scripts
+RUN chmod 0755 /opt/openclaw-deploy/scripts/*.sh
+
 ENV HOME=/home/node \
   OPENCLAW_HOME=/home/node \
   OPENCLAW_STATE_DIR=/data/.openclaw \
