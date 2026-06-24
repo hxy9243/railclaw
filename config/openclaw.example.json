@@ -1,0 +1,20 @@
+{
+  "$schemaComment": "Example only. Copy selected settings into /data/.openclaw/openclaw.json through migration or OpenClaw CLI.",
+  "gateway": {
+    "mode": "local",
+    "bind": "lan",
+    "controlUi": {
+      "allowedOrigins": [
+        "https://YOUR-RAILWAY-DOMAIN.up.railway.app"
+      ]
+    }
+  },
+  "agents": {
+    "defaults": {
+      "workspace": "/data/workspace",
+      "sandbox": {
+        "mode": "off"
+      }
+    }
+  }
+}

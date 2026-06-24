@@ -1,0 +1,27 @@
+services:
+  openclaw:
+    build:
+      context: .
+      args:
+        OPENCLAW_IMAGE: ${OPENCLAW_IMAGE:-ghcr.io/openclaw/openclaw:latest}
+        EXTRA_APT_PACKAGES: ${EXTRA_APT_PACKAGES:-bash ca-certificates coreutils curl dumb-init findutils git git-lfs gnupg jq less nano openssh-client procps python3 python3-pip python3-venv ripgrep rsync sqlite3 tar tini unzip vim wget xz-utils zip}
+        EXTRA_NPM_PACKAGES: ${EXTRA_NPM_PACKAGES:-@openai/codex @anthropic-ai/claude-code @google/gemini-cli obsidian-cli playwright}
+        EXTRA_PIP_PACKAGES: ${EXTRA_PIP_PACKAGES:-}
+        INSTALL_PLAYWRIGHT_BROWSERS: ${INSTALL_PLAYWRIGHT_BROWSERS:-1}
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: ${PORT:-8080}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
+      OPENCLAW_DISABLE_BONJOUR: ${OPENCLAW_DISABLE_BONJOUR:-1}
+      OPENCLAW_GATEWAY_BIND: ${OPENCLAW_GATEWAY_BIND:-lan}
+      OPENCLAW_TZ: ${OPENCLAW_TZ:-UTC}
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    volumes:
+      - openclaw_data:/data
+    restart: unless-stopped
+
+volumes:
+  openclaw_data:

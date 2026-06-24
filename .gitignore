@@ -1,0 +1,36 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.secrets
+
+# Migrated OpenClaw state and archives
+data/
+state/
+workspace/
+openclaw-data/
+openclaw-state/
+openclaw-migration-*.tar*
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# Railway and local tooling caches
+.railway/
+.cache/
+.tmp/
+tmp/
+
+# Dependency/build output
+node_modules/
+dist/
+coverage/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
