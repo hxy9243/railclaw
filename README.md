@@ -123,6 +123,7 @@ Run:
 
 ```bash
 scripts/validate.sh
+test/migration-smoke.sh
 ```
 
 This checks:
@@ -134,6 +135,8 @@ This checks:
 - Railway healthcheck points at `/healthz`.
 - Git is not tracking obvious state, archives, `.env`, personal paths, or secret-looking values.
 - Shell scripts parse.
+
+The migration smoke test verifies encrypted package/restore behavior against fake state.
 
 ## Security Notes
 

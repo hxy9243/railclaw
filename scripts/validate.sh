@@ -20,6 +20,7 @@ need_file config/openclaw.example.json
 need_file scripts/package-openclaw-data.sh
 need_file scripts/restore-openclaw-data.sh
 need_file scripts/smoke-test.sh
+need_file test/migration-smoke.sh
 need_file README.md
 need_file INSTRUCTION.md
 
@@ -48,5 +49,6 @@ if git ls-files -z | xargs -0 grep -InE "$scan_pattern" -- 2>/dev/null; then
 fi
 
 bash -n scripts/*.sh
+bash -n test/*.sh
 
 echo "validate: ok"

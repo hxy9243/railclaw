@@ -34,6 +34,7 @@ This repo deploys OpenClaw to Railway. Keep it generic, repeatable, and secret-s
 
 ```bash
 scripts/validate.sh
+test/migration-smoke.sh
 git status --short
 ```
 
