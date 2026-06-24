@@ -35,7 +35,15 @@ if git ls-files | grep -E '(^|/)(\.env|data|state|workspace|migration-out|.*\.ta
   fail "secret/state artifacts are tracked by git"
 fi
 
-if git ls-files -z | xargs -0 grep -InE '(/home/kevin|OPENCLAW_GATEWAY_TOKEN=[A-Za-z0-9+/=]{20,}|sk-[A-Za-z0-9_-]{20,})' -- 2>/dev/null; then
+home_pattern="$(printf '%s' "${HOME:-}" | sed 's/[.[\*^$()+?{|]/\\&/g')"
+secret_pattern='(OPENCLAW_GATEWAY_TOKEN=[A-Za-z0-9+/=]{20,}|sk-[A-Za-z0-9_-]{20,})'
+if [ -n "$home_pattern" ]; then
+  scan_pattern="(${home_pattern}|${secret_pattern})"
+else
+  scan_pattern="$secret_pattern"
+fi
+
+if git ls-files -z | xargs -0 grep -InE "$scan_pattern" -- 2>/dev/null; then
   fail "tracked files appear to contain personal paths or secret-looking values"
 fi
 
