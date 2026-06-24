@@ -6,14 +6,16 @@ This repo deploys OpenClaw to Railway. Keep it generic, repeatable, and secret-s
 
 - Never commit `.env`, real OpenClaw config, provider keys, channel tokens, passcodes, auth-profile secrets, memory/state, workspace files, migration archives, Railway local state, or personal paths.
 - Runtime persistent data must live under `/data`.
-- The deployed gateway must listen on Railway's `$PORT`.
-- Prefer the official OpenClaw image as the base image. Pin `OPENCLAW_IMAGE` for production repeatability.
+- The deployed gateway must listen on `OPENCLAW_GATEWAY_PORT`, normally `8080`, matching Railway HTTP Proxy.
+- The primary Dockerfile installs OpenClaw from npm for verifiable public builds. `Dockerfile.official-image` is the optional official-image variant.
+- Pin `OPENCLAW_NPM_PACKAGE` or `OPENCLAW_IMAGE` for production repeatability.
 - Keep examples placeholder-only.
 - Run `scripts/validate.sh` before finalizing changes.
 
 ## Important Files
 
-- `Dockerfile`: Railway image. Inherits `ghcr.io/openclaw/openclaw` through `ARG OPENCLAW_IMAGE`.
+- `Dockerfile`: Railway image. Installs pinned OpenClaw npm package.
+- `Dockerfile.official-image`: optional image that inherits `ghcr.io/openclaw/openclaw` through `ARG OPENCLAW_IMAGE`.
 - `railway.json`: Railway build and deploy config.
 - `.env.example`: placeholder-only environment documentation.
 - `config/openclaw.example.json`: placeholder-only OpenClaw config example.
@@ -67,6 +69,8 @@ Delete local migration archives after successful restore unless there is a delib
 - GitHub repo connected to Railway.
 - Service uses Dockerfile builder.
 - Volume mounted at `/data`.
+- HTTP Proxy configured on port `8080`.
+- `OPENCLAW_GATEWAY_PORT=8080` set as a Railway variable.
 - `OPENCLAW_GATEWAY_TOKEN` set as a Railway variable.
 - Provider/channel secrets set as Railway variables.
 - Public domain configured only after auth is understood.
@@ -78,5 +82,5 @@ Delete local migration archives after successful restore unless there is a delib
 - `git ls-files` does not include state, archive, `.env`, or local Railway files.
 - No tracked file contains a personal home path.
 - No tracked file contains real-looking API keys or gateway tokens.
-- Dockerfile still copies scripts into `/opt/openclaw-deploy/scripts`.
+- Dockerfiles still copy scripts into `/opt/openclaw-deploy/scripts`.
 - Docs and scripts agree on `/data/.openclaw`, `/data/.config/openclaw`, and `/data/workspace`.

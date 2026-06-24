@@ -6,7 +6,8 @@ This repo intentionally contains only generic deploy code, examples, and scripts
 
 ## What This Provides
 
-- `Dockerfile` based on the official `ghcr.io/openclaw/openclaw` image.
+- `Dockerfile` that installs a pinned OpenClaw npm package on a Node Linux base.
+- `Dockerfile.official-image` for builders that can pull the official `ghcr.io/openclaw/openclaw` image.
 - Railway config in `railway.json`.
 - Persistent state layout under a single Railway volume mounted at `/data`.
 - Example environment and OpenClaw config files.
@@ -16,7 +17,7 @@ This repo intentionally contains only generic deploy code, examples, and scripts
 
 ## Architecture
 
-The container runs OpenClaw gateway on Railway's `$PORT`, defaulting locally to `8080`.
+The container runs OpenClaw gateway on `OPENCLAW_GATEWAY_PORT`, defaulting to `8080`, which should match Railway's HTTP Proxy port.
 
 Persistent data is expected at:
 
@@ -37,6 +38,7 @@ Railway volumes are mounted only at runtime, not at build time. Anything that mu
 
 ```dotenv
 OPENCLAW_GATEWAY_TOKEN=<long-random-token>
+OPENCLAW_GATEWAY_PORT=8080
 OPENCLAW_DISABLE_BONJOUR=1
 OPENCLAW_GATEWAY_BIND=lan
 OPENCLAW_TZ=UTC
@@ -50,23 +52,29 @@ scripts/generate-token.sh
 
 5. Add provider and channel secrets as Railway variables, not committed files.
 6. Deploy.
-7. Open the Railway domain and use the configured gateway token when OpenClaw asks for authorization.
+7. Open `https://YOUR-RAILWAY-DOMAIN/openclaw` and use the configured gateway token when OpenClaw asks for authorization.
 
 ## Version Pinning
 
-The Dockerfile defaults to:
+The default Dockerfile installs:
 
 ```text
-ghcr.io/openclaw/openclaw:latest
+openclaw@2026.6.10
 ```
 
-For repeatable production deploys, set the Railway build argument `OPENCLAW_IMAGE` to a fixed OpenClaw tag, for example:
+For controlled production updates, set the Railway build argument `OPENCLAW_NPM_PACKAGE` to a fixed OpenClaw package version:
 
 ```text
-ghcr.io/openclaw/openclaw:2026.6.10
+openclaw@2026.6.10
 ```
 
-Use `latest` only when you want automatic upstream updates.
+Use `openclaw@latest` only when you want automatic upstream updates.
+
+If your Railway builder can access the official GitHub Container Registry image, you can switch `railway.json` to `Dockerfile.official-image` and set:
+
+```text
+OPENCLAW_IMAGE=ghcr.io/openclaw/openclaw:2026.6.10
+```
 
 ## Local Run
 
@@ -77,7 +85,7 @@ scripts/generate-token.sh
 docker compose up --build
 ```
 
-Then test:
+Then open `http://127.0.0.1:8080/openclaw` and test:
 
 ```bash
 scripts/smoke-test.sh http://127.0.0.1:8080

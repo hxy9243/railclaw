@@ -5,7 +5,7 @@
 - Builder: Dockerfile.
 - Volume mount: `/data`.
 - Healthcheck: `/healthz`.
-- Public port: Railway-provided `$PORT`.
+- Public Networking HTTP Proxy port: `8080`.
 
 The included `railway.json` configures Dockerfile build and healthcheck. Volume attachment and secret variables are configured in Railway.
 
@@ -13,6 +13,7 @@ The included `railway.json` configures Dockerfile build and healthcheck. Volume 
 
 ```dotenv
 OPENCLAW_GATEWAY_TOKEN=<long-random-token>
+OPENCLAW_GATEWAY_PORT=8080
 OPENCLAW_DISABLE_BONJOUR=1
 OPENCLAW_GATEWAY_BIND=lan
 OPENCLAW_TZ=UTC
@@ -21,8 +22,10 @@ OPENCLAW_TZ=UTC
 Optional production build pin:
 
 ```dotenv
-OPENCLAW_IMAGE=ghcr.io/openclaw/openclaw:2026.6.10
+OPENCLAW_NPM_PACKAGE=openclaw@2026.6.10
 ```
+
+For `Dockerfile.official-image`, use `OPENCLAW_IMAGE=ghcr.io/openclaw/openclaw:2026.6.10` instead.
 
 Add provider and channel credentials in Railway variables only.
 
@@ -55,9 +58,10 @@ smoke-test: ok
 For controlled updates:
 
 1. Change the Railway build arg `OPENCLAW_IMAGE` to a newer fixed tag.
+1. Or, with the default npm Dockerfile, change `OPENCLAW_NPM_PACKAGE` to a newer fixed version.
 2. Deploy to a non-production environment first when possible.
 3. Run smoke tests.
 4. Confirm dashboard login and one representative agent flow.
-5. Promote the same pinned image tag to production.
+5. Promote the same pinned version to production.
 
 Using `latest` trades repeatability for automatic upstream updates.

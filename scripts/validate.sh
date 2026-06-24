@@ -14,6 +14,7 @@ need_file() {
 }
 
 need_file Dockerfile
+need_file Dockerfile.official-image
 need_file railway.json
 need_file .env.example
 need_file config/openclaw.example.json
@@ -27,9 +28,12 @@ need_file INSTRUCTION.md
 python3 -m json.tool railway.json >/dev/null
 python3 -m json.tool config/openclaw.example.json >/dev/null
 
-grep -q 'FROM ${OPENCLAW_IMAGE}' Dockerfile || fail "Dockerfile must inherit the configured official OpenClaw image"
+grep -q 'FROM node:24-bookworm-slim' Dockerfile || fail "Dockerfile must use the npm-install Node base"
+grep -q 'OPENCLAW_NPM_PACKAGE=openclaw@' Dockerfile || fail "Dockerfile must pin an OpenClaw npm package by default"
+grep -q 'FROM ${OPENCLAW_IMAGE}' Dockerfile.official-image || fail "official-image variant must inherit the configured official OpenClaw image"
 grep -q 'OPENCLAW_CONFIG_DIR=/data/.openclaw' Dockerfile || fail "Dockerfile must pin config to /data"
 grep -q 'OPENCLAW_WORKSPACE_DIR=/data/workspace' Dockerfile || fail "Dockerfile must pin workspace to /data"
+grep -q 'OPENCLAW_GATEWAY_PORT=8080' Dockerfile || fail "Dockerfile must default to the Railway OpenClaw port"
 grep -q '"healthcheckPath": "/healthz"' railway.json || fail "Railway healthcheck must use /healthz"
 
 if git ls-files | grep -E '(^|/)(\.env|data|state|workspace|migration-out|.*\.tar(\.gz)?(\.enc)?)$' >/dev/null; then
