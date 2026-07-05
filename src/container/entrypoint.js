@@ -2,7 +2,7 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import { ensureContainerLayout } from '../lib/container-layout.js';
-import { initConfig } from '../lib/config.js';
+import { initConfig, repairConfigForContainer } from '../lib/config.js';
 
 const nodeUid = 1000;
 const nodeGid = 1000;
@@ -22,6 +22,8 @@ try {
   if (error.code !== 'ENOENT') throw error;
   await initConfig({ dataDir: '/data' });
 }
+
+await repairConfigForContainer({ dataDir: '/data' });
 
 if (typeof process.getuid === 'function' && process.getuid() === 0) {
   await chownTree('/data', nodeUid, nodeGid);

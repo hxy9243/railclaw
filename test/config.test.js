@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { initConfig } from '../src/lib/config.js';
+import { initConfig, repairConfigForContainer } from '../src/lib/config.js';
 
 test('config init writes a /data-oriented OpenClaw config', async () => {
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'railclaw-config-'));
@@ -27,3 +27,39 @@ test('config init refuses to overwrite by default', async () => {
     await fs.rm(tmp, { recursive: true, force: true });
   }
 });
+
+test('container config repair removes missing plugin load paths and backs up config', async () => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'railclaw-config-'));
+  try {
+    const configDir = path.join(tmp, '.openclaw');
+    await fs.mkdir(configDir, { recursive: true });
+    const existingPlugin = path.join(tmp, 'plugin');
+    await fs.mkdir(existingPlugin);
+    const configPath = path.join(configDir, 'openclaw.json');
+    await fs.writeFile(configPath, `${JSON.stringify({
+      plugins: {
+        load: {
+          paths: [existingPlugin, '/missing/local/plugin/path'],
+        },
+      },
+    })}\n`);
+
+    const result = await repairConfigForContainer({ dataDir: tmp });
+    const repaired = JSON.parse(await fs.readFile(configPath, 'utf8'));
+
+    assert.equal(result.changed, true);
+    assert.deepEqual(repaired.plugins.load.paths, [existingPlugin]);
+    assert.equal(await fileExists(`${configPath}.railclaw-pre-container-repair`), true);
+  } finally {
+    await fs.rm(tmp, { recursive: true, force: true });
+  }
+});
+
+async function fileExists(file) {
+  try {
+    await fs.access(file);
+    return true;
+  } catch {
+    return false;
+  }
+}
