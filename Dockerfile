@@ -36,6 +36,11 @@ RUN mkdir -p /data/.openclaw /data/workspace /data/.config/openclaw \
   /home/node/.config \
   && chown -R node:node /data /home/node
 
+WORKDIR /opt/railclaw
+COPY --chown=node:node package.json package-lock.json ./
+RUN npm ci --omit=dev \
+  && npm cache clean --force
+COPY --chown=node:node bin /opt/railclaw/bin
 COPY --chown=node:node src /opt/railclaw/src
 
 ENV HOME=/home/node \
