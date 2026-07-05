@@ -8,7 +8,7 @@ const nodeUid = 1000;
 const nodeGid = 1000;
 
 if (typeof process.getuid === 'function' && process.getuid() === 0) {
-  await fs.chown('/data', nodeUid, nodeGid).catch(() => {});
+  await chownTree('/data', nodeUid, nodeGid);
 }
 
 await ensureContainerLayout({
@@ -21,6 +21,11 @@ try {
 } catch (error) {
   if (error.code !== 'ENOENT') throw error;
   await initConfig({ dataDir: '/data' });
+}
+
+if (typeof process.getuid === 'function' && process.getuid() === 0) {
+  await chownTree('/data', nodeUid, nodeGid);
+  await chownTree(process.env.HOME || '/home/node', nodeUid, nodeGid);
 }
 
 const bind = process.env.OPENCLAW_GATEWAY_BIND || 'lan';
@@ -36,3 +41,27 @@ child.on('exit', (code, signal) => {
   if (signal) process.kill(process.pid, signal);
   process.exit(code ?? 1);
 });
+
+async function chownTree(target, uid, gid) {
+  let stat;
+  try {
+    stat = await fs.lstat(target);
+  } catch (error) {
+    if (error.code === 'ENOENT') return;
+    throw error;
+  }
+
+  if (stat.isDirectory()) {
+    await fs.chown(target, uid, gid).catch(() => {});
+    const entries = await fs.readdir(target);
+    await Promise.all(entries.map((entry) => chownTree(`${target}/${entry}`, uid, gid)));
+    return;
+  }
+
+  if (stat.isSymbolicLink() && fs.lchown) {
+    await fs.lchown(target, uid, gid).catch(() => {});
+    return;
+  }
+
+  await fs.chown(target, uid, gid).catch(() => {});
+}
