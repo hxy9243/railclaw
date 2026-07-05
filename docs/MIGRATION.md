@@ -1,64 +1,87 @@
 # Migration Guide
 
-OpenClaw stores operational state and secrets outside the deploy code. This repo migrates that data into the Railway volume mounted at `/data`.
+`railclaw migrate` is the unified migration path. From this repo, run it as `npm run railclaw -- migrate`. It migrates OpenClaw config, state, provider/channel auth, auth-profile secret material, and workspace data together by default.
 
-## What To Migrate
+## What Gets Migrated
 
-Package these source directories from the existing OpenClaw install:
+Source directories:
 
-- OpenClaw config/state directory, commonly `.openclaw`.
-- Auth-profile secret key directory, commonly `.config/openclaw`.
+- OpenClaw config/state directory, commonly `~/.openclaw`.
+- OpenClaw auth-profile secret directory, commonly `~/.config/openclaw`.
 - Workspace directory used by agents.
 
-The migration script stores them as:
+Archive directories:
 
 - `config/`
 - `auth-profile-secrets/`
 - `workspace/`
 
-The restore script maps them to:
+Restore targets:
 
 - `/data/.openclaw`
 - `/data/.config/openclaw`
 - `/data/workspace`
 
-## Create An Encrypted Archive
+The restore preserves the source layout. It does not generate an equivalent fresh config.
+
+## Package
+
+Migration archives contain secrets. Use encryption:
 
 ```bash
 export MIGRATION_PASSPHRASE='<strong one-time passphrase>'
-scripts/package-openclaw-data.sh \
-  --config-dir /path/to/.openclaw \
-  --secret-dir /path/to/.config/openclaw \
+npm run railclaw -- migrate --mode package \
+  --config-dir ~/.openclaw \
+  --secret-dir ~/.config/openclaw \
   --workspace-dir /path/to/workspace \
   --output ./migration-out
 ```
 
 Output:
 
-- `openclaw-migration-YYYYMMDDTHHMMSSZ.tar.gz.enc`
-- `openclaw-migration-YYYYMMDDTHHMMSSZ.tar.gz.enc.sha256`
+- `railclaw-migration-YYYYMMDDTHHMMSSZ.tar.gz.enc`
+- `railclaw-migration-YYYYMMDDTHHMMSSZ.tar.gz.enc.sha256`
 
-Both files are ignored by git.
+If `MIGRATION_PASSPHRASE` is not set, Railclaw asks before creating a plaintext archive.
 
-## Restore The Archive
+## Restore
 
-Run this in an environment where the Railway-style volume is mounted at `/data`:
+Run restore where the target Railway-style volume is mounted:
 
 ```bash
 export MIGRATION_PASSPHRASE='<same passphrase>'
-scripts/restore-openclaw-data.sh openclaw-migration-YYYYMMDDTHHMMSSZ.tar.gz.enc --data-dir /data
+npm run railclaw -- migrate --mode restore \
+  --archive ./migration-out/railclaw-migration-YYYYMMDDTHHMMSSZ.tar.gz.enc \
+  --data-dir /data \
+  --yes
 ```
 
-The script validates the archive manifest before copying anything.
+Restore replaces:
 
-## After Restore
+- `/data/.openclaw`
+- `/data/.config/openclaw`
+- `/data/workspace`
 
-1. Restart or redeploy OpenClaw.
-2. Confirm `/healthz` and `/readyz`.
-3. Log into the OpenClaw dashboard.
-4. Verify agents, provider auth, channels, and workspace expectations.
-5. Delete local plaintext or encrypted migration artifacts unless intentionally retained under a secure backup policy.
+The replacement is intentional and destructive. Omit `--yes` to make Railclaw refuse replacement when target directories already exist.
 
-## Failure Recovery
+## Railway Flow
 
-If restore was run against the wrong target, stop the service first and inspect the `/data` volume before retrying. The restore script uses `rsync --delete` for exact directory replacement, so a bad restore can remove files in the target OpenClaw state directories.
+1. Create or attach a Railway volume mounted at `/data`.
+2. Upload the migration archive using Railway volume file tools or another secure path.
+3. Restore the archive in an environment with `/data` mounted.
+4. Restart or redeploy:
+
+```bash
+railway restart
+# or
+railway up
+```
+
+5. Verify:
+
+```bash
+npm run railclaw -- migrate --mode verify --data-dir /data
+npm run railclaw -- smoke https://YOUR-RAILWAY-DOMAIN.up.railway.app
+```
+
+After a successful restore and normal Railway restart/deploy, the OpenClaw instance should be live and operational with the same config, provider auth, auth-profile secret material, and workspace as the source.
