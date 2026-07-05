@@ -69,7 +69,7 @@ async function ensureService(status, serviceName) {
 }
 
 async function ensureVolume(service, environment) {
-  const result = await runRailway(['volume', 'list', '--service', service, '--environment', environment, '--json']);
+  const result = await runRailway(['volume', '--service', service, '--environment', environment, 'list', '--json']);
   const parsed = JSON.parse(result.stdout || '{}');
   const volumes = parsed.volumes || parsed || [];
   const list = Array.isArray(volumes) ? volumes : [];
@@ -79,7 +79,7 @@ async function ensureVolume(service, environment) {
     return;
   }
   console.log('creating Railway volume mounted at /data');
-  await runRailway(['volume', 'add', '--service', service, '--environment', environment, '--mount-path', '/data', '--json']);
+  await runRailway(['volume', '--service', service, '--environment', environment, 'add', '--mount-path', '/data', '--json']);
 }
 
 async function ensureVariables(service, environment) {
