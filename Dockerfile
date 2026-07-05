@@ -33,10 +33,10 @@ RUN if [ "${INSTALL_PLAYWRIGHT_BROWSERS}" = "1" ]; then \
   fi
 
 RUN mkdir -p /data/.openclaw /data/workspace /data/.config/openclaw \
-  && chown -R node:node /data
+  /home/node/.config \
+  && chown -R node:node /data /home/node
 
-COPY --chown=node:node scripts /opt/openclaw-deploy/scripts
-RUN chmod 0755 /opt/openclaw-deploy/scripts/*.sh
+COPY --chown=node:node src /opt/railclaw/src
 
 ENV HOME=/home/node \
   OPENCLAW_HOME=/home/node \
@@ -58,4 +58,4 @@ USER node
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
   CMD node -e "const port = process.env.OPENCLAW_GATEWAY_PORT || process.env.PORT || '8080'; fetch('http://127.0.0.1:' + port + '/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["sh", "-lc", "exec openclaw gateway --bind ${OPENCLAW_GATEWAY_BIND:-lan} --port ${OPENCLAW_GATEWAY_PORT:-${PORT:-8080}}"]
+CMD ["node", "/opt/railclaw/src/container/entrypoint.js"]
