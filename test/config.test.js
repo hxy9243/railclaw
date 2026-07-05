@@ -17,3 +17,13 @@ test('config init writes a /data-oriented OpenClaw config', async () => {
     await fs.rm(tmp, { recursive: true, force: true });
   }
 });
+
+test('config init refuses to overwrite by default', async () => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'railclaw-config-'));
+  try {
+    await initConfig({ dataDir: tmp });
+    await assert.rejects(() => initConfig({ dataDir: tmp }), /already exists/);
+  } finally {
+    await fs.rm(tmp, { recursive: true, force: true });
+  }
+});
