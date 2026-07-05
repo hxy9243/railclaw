@@ -24,7 +24,7 @@ validate:
 	npm run check
 
 deploy:
-	railway up
+	node bin/railclaw.js deploy
 
 doctor:
 	node bin/railclaw.js doctor

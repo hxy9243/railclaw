@@ -7,6 +7,7 @@ import { providerInstructions, listProviders } from '../lib/providers.js';
 import { smoke } from '../lib/smoke.js';
 import { validateRepository } from '../lib/validate.js';
 import { doctor } from '../lib/doctor.js';
+import { deploy } from '../lib/deploy.js';
 
 export async function run(argv = process.argv) {
   const program = new Command();
@@ -15,6 +16,17 @@ export async function run(argv = process.argv) {
     .name('railclaw')
     .description('OpenClaw migration, config, and validation helper for Railway deployments')
     .version('0.1.0');
+
+  program
+    .command('deploy')
+    .description('Deploy this OpenClaw app with Railway, creating the service/volume if missing')
+    .option('--service <name>', 'Railway service name', 'openclaw')
+    .option('--environment <name>', 'Railway environment name', 'production')
+    .option('--project-name <name>', 'project name to use when initializing an unlinked project', 'railclaw-openclaw')
+    .option('--detach', 'start deploy and return without streaming logs')
+    .option('--create-domain', 'create a Railway service domain when none exists')
+    .option('--message <message>', 'deployment message')
+    .action((options) => deploy(options));
 
   program
     .command('token')

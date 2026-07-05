@@ -9,7 +9,7 @@ The repo provides:
 - A thin `Makefile` for broad workflows.
 - Railway config in `railway.json`.
 
-Railclaw does not replace the official Railway CLI. Use Railway directly for auth, project linking, variables, volumes, deploys, logs, and restarts. Install and authenticate Railway from the official docs: https://docs.railway.com/cli.
+Railclaw does not replace the official Railway CLI. Use Railway directly for general auth, project linking, variables, logs, and restarts. The `railclaw deploy` command is a narrow app-specific helper that creates the OpenClaw service/volume if missing and then calls `railway up`. Install and authenticate Railway from the official docs: https://docs.railway.com/cli.
 
 ## Layout
 
@@ -53,19 +53,21 @@ Run checks:
 make check
 ```
 
-Deploy code with the official Railway CLI:
+Deploy code:
 
 ```bash
 railway login
 railway link
-railway up
-```
-
-The Make target is only a convenience:
-
-```bash
 make deploy
 ```
+
+The deploy helper initializes the app when needed:
+
+```bash
+npm run railclaw -- deploy --create-domain
+```
+
+It creates an `openclaw` service if the linked project has no matching service, attaches a `/data` volume when missing, sets baseline runtime variables when missing, and then runs `railway up`.
 
 Check local readiness:
 
@@ -121,7 +123,7 @@ Run the printed `railway variable set ...` commands yourself. Railclaw does not 
 6. Deploy:
 
 ```bash
-railway up
+make deploy
 ```
 
 ## Unified Migration

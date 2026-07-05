@@ -40,7 +40,7 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
   requireContains(dockerfile, 'src/container/entrypoint.js', 'Dockerfile must use the Railclaw container entrypoint', failures);
   requireContains(railway, '"healthcheckPath": "/healthz"', 'Railway healthcheck must use /healthz', failures);
-  requireContains(makefile, 'railway up', 'Makefile deploy target must call the official Railway CLI directly', failures);
+  requireContains(makefile, 'node bin/railclaw.js deploy', 'Makefile deploy target must use the Railclaw deploy helper', failures);
   if (makefile.includes(`railclaw ${'railway'}`)) {
     failures.push('Makefile must not expose Railway wrapper commands through railclaw');
   }

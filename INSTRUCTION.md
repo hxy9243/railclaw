@@ -71,6 +71,7 @@ After restore, restart or redeploy with the official Railway CLI and run a smoke
 
 - Official Railway CLI installed and authenticated.
 - GitHub repo connected or project linked with `railway link`.
+- `make deploy` or `railclaw deploy` creates the `openclaw` service when missing.
 - Service uses Dockerfile builder.
 - Volume mounted at `/data`.
 - HTTP Proxy configured on port `8080`.

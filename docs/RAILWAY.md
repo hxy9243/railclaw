@@ -1,6 +1,6 @@
 # Railway Operations
 
-Railclaw uses Railway, but does not wrap Railway lifecycle commands. Use the official Railway CLI directly for auth, linking, variables, volumes, deploys, logs, and restarts.
+Railclaw uses Railway, but does not replace the Railway CLI. Use the official Railway CLI directly for auth, linking, variables, logs, and restarts. `railclaw deploy` is a narrow app-specific helper for this repo: it creates the OpenClaw service and `/data` volume if missing, sets baseline variables if missing, and then runs `railway up`.
 
 Official CLI docs: https://docs.railway.com/cli
 
@@ -51,13 +51,19 @@ Do not move those paths without updating Dockerfiles, docs, validation, and migr
 
 ## Deploy
 
-Use `railway up` for this repo’s code:
+Use the Make target:
 
 ```bash
-railway up
+make deploy
 ```
 
-Do not use `railway deploy` for this application; Railway documents that command for deploying pre-built templates.
+Or call the helper directly:
+
+```bash
+npm run railclaw -- deploy --create-domain
+```
+
+Do not use `railway deploy` for this application; Railway documents that command for deploying pre-built templates. Railclaw deploys through `railway up`.
 
 ## Smoke Test
 
