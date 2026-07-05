@@ -23,8 +23,10 @@ export async function deploy(options = {}) {
   }
 
   await ensureService(status, service);
+  status = await getStatus();
+  const target = resolveTarget(status, { service, environment });
   await ensureVariables(service, environment);
-  let volumeReady = await tryEnsureVolume(service, environment);
+  let volumeReady = await tryEnsureVolume(target);
 
   if (options.createDomain) {
     await ensureDomain(service, environment);
@@ -38,7 +40,7 @@ export async function deploy(options = {}) {
 
   if (!volumeReady) {
     console.log('retrying /data volume setup after initial deploy');
-    volumeReady = await tryEnsureVolume(service, environment);
+    volumeReady = await tryEnsureVolume(target);
     if (volumeReady && options.detach) {
       console.log('volume attached after deploy; redeploying detached so OpenClaw starts with /data mounted');
       await runRailway(args, { stdio: 'inherit' });
@@ -77,8 +79,37 @@ async function ensureService(status, serviceName) {
   await runRailway(['add', '--service', serviceName, '--json']);
 }
 
-async function ensureVolume(service, environment) {
-  const result = await runRailway(['volume', '--service', service, '--environment', environment, 'list', '--json']);
+export function resolveTarget(status, { service, environment }) {
+  const envs = status?.environments?.edges?.map((edge) => edge.node) || [];
+  const environmentNode = envs.find((candidate) => candidate.name === environment || candidate.id === environment);
+  if (!environmentNode) {
+    throw new Error(`Railway environment not found: ${environment}`);
+  }
+
+  const services = status?.services?.edges?.map((edge) => edge.node) || [];
+  const serviceNode = services.find((candidate) => candidate.name === service || candidate.id === service);
+  if (!serviceNode) {
+    throw new Error(`Railway service not found: ${service}`);
+  }
+
+  return {
+    environment,
+    environmentId: environmentNode.id,
+    service,
+    serviceId: serviceNode.id,
+  };
+}
+
+async function ensureVolume(target) {
+  const result = await runRailway([
+    'volume',
+    '--service',
+    target.serviceId,
+    '--environment',
+    target.environmentId,
+    'list',
+    '--json',
+  ]);
   const parsed = JSON.parse(result.stdout || '{}');
   const volumes = parsed.volumes || parsed || [];
   const list = Array.isArray(volumes) ? volumes : [];
@@ -88,12 +119,22 @@ async function ensureVolume(service, environment) {
     return;
   }
   console.log('creating Railway volume mounted at /data');
-  await runRailway(['volume', '--service', service, '--environment', environment, 'add', '--mount-path', '/data', '--json']);
+  await runRailway([
+    'volume',
+    '--service',
+    target.serviceId,
+    '--environment',
+    target.environmentId,
+    'add',
+    '--mount-path',
+    '/data',
+    '--json',
+  ]);
 }
 
-async function tryEnsureVolume(service, environment) {
+async function tryEnsureVolume(target) {
   try {
-    await ensureVolume(service, environment);
+    await ensureVolume(target);
     return true;
   } catch (error) {
     console.warn(`warn: could not ensure /data volume yet: ${error.shortMessage || error.message}`);
