@@ -15,6 +15,8 @@ test('container layout creates persisted data dirs and home symlinks', async () 
 
     assert.equal(await fs.readlink(path.join(home, '.openclaw')), path.join(data, '.openclaw'));
     assert.equal(await fs.readlink(path.join(home, '.config/openclaw')), path.join(data, '.config/openclaw'));
+    assert.equal(await fs.readlink(path.join(home, '.codex')), path.join(data, '.codex'));
+    assert.equal(await fs.readlink(path.join(home, '.config/opencode')), path.join(data, '.config/opencode'));
     assert.equal((await fs.stat(path.join(data, 'workspace'))).isDirectory(), true);
   } finally {
     await fs.rm(tmp, { recursive: true, force: true });

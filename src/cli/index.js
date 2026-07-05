@@ -82,6 +82,8 @@ export async function run(argv = process.argv) {
     .option('--mode <mode>', 'package, restore, or verify')
     .option('--config-dir <dir>', 'source OpenClaw config/state directory', '~/.openclaw')
     .option('--secret-dir <dir>', 'source auth-profile secret directory', '~/.config/openclaw')
+    .option('--codex-dir <dir>', 'source Codex auth/state directory', '~/.codex')
+    .option('--opencode-dir <dir>', 'source Opencode auth/state directory', '~/.config/opencode')
     .option('--workspace-dir <dir>', 'source workspace directory', './workspace')
     .option('--output <dir>', 'archive output directory', './migration-out')
     .option('--archive <path>', 'archive path for restore mode')

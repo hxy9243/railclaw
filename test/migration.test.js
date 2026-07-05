@@ -13,22 +13,30 @@ test('migration packages and restores config, provider auth, auth secrets, and w
     const source = path.join(tmp, 'source');
     const config = path.join(source, '.openclaw');
     const auth = path.join(source, '.config/openclaw');
+    const codex = path.join(source, '.codex');
+    const opencode = path.join(source, '.config/opencode');
     const workspace = path.join(source, 'workspace');
     const output = path.join(tmp, 'output');
     const data = path.join(tmp, 'data');
 
     await fs.mkdir(path.join(config, 'agents/default/agent'), { recursive: true });
     await fs.mkdir(auth, { recursive: true });
+    await fs.mkdir(codex, { recursive: true });
+    await fs.mkdir(opencode, { recursive: true });
     await fs.mkdir(path.join(workspace, 'project'), { recursive: true });
 
     await fs.writeFile(path.join(config, 'openclaw.json'), '{"gateway":{"mode":"local"}}\n');
     await fs.writeFile(path.join(config, 'agents/default/agent/auth-profiles.json'), '{"profiles":[{"provider":"openai-codex"}]}\n');
     await fs.writeFile(path.join(auth, 'key'), 'fake-auth-profile-secret\n');
+    await fs.writeFile(path.join(codex, 'auth.json'), '{"kind":"codex-auth"}\n');
+    await fs.writeFile(path.join(opencode, 'auth.json'), '{"kind":"opencode-auth"}\n');
     await fs.writeFile(path.join(workspace, 'project/README.md'), 'workspace file\n');
 
     const archive = await packageMigration({
       configDir: config,
       secretDir: auth,
+      codexDir: codex,
+      opencodeDir: opencode,
       workspaceDir: workspace,
       output,
     });
@@ -43,6 +51,8 @@ test('migration packages and restores config, provider auth, auth secrets, and w
       '{"profiles":[{"provider":"openai-codex"}]}\n',
     );
     assert.equal(await fs.readFile(path.join(data, '.config/openclaw/key'), 'utf8'), 'fake-auth-profile-secret\n');
+    assert.equal(await fs.readFile(path.join(data, '.codex/auth.json'), 'utf8'), '{"kind":"codex-auth"}\n');
+    assert.equal(await fs.readFile(path.join(data, '.config/opencode/auth.json'), 'utf8'), '{"kind":"opencode-auth"}\n');
     assert.equal(await fs.readFile(path.join(data, 'workspace/project/README.md'), 'utf8'), 'workspace file\n');
   } finally {
     if (oldPassphrase === undefined) {

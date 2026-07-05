@@ -28,14 +28,26 @@ export async function packageMigration(options = {}) {
     await copyTree(sources.configDir, path.join(payloadDir, 'config'));
     await copyTree(sources.secretDir, path.join(payloadDir, 'auth-profile-secrets'));
     await copyTree(sources.workspaceDir, path.join(payloadDir, 'workspace'));
+    const optionalIncludes = [];
+    for (const [label, source] of [
+      ['codex-auth', sources.codexDir],
+      ['opencode-auth', sources.opencodeDir],
+    ]) {
+      if (await exists(source)) {
+        await copyTree(source, path.join(payloadDir, label));
+        optionalIncludes.push(label);
+      }
+    }
 
     const manifest = {
       format: FORMAT,
       createdUtc: timestamp,
       targetConfigDir: '/data/.openclaw',
       targetSecretDir: '/data/.config/openclaw',
+      targetCodexDir: '/data/.codex',
+      targetOpencodeDir: '/data/.config/opencode',
       targetWorkspaceDir: '/data/workspace',
-      includes: ['config', 'auth-profile-secrets', 'workspace'],
+      includes: ['config', 'auth-profile-secrets', 'workspace', ...optionalIncludes],
     };
     await fs.writeFile(path.join(payloadDir, 'MANIFEST.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
@@ -83,6 +95,15 @@ export async function restoreMigration(archivePath, options = {}) {
       ['auth-profile-secrets', path.join(dataDir, '.config/openclaw')],
       ['workspace', path.join(dataDir, 'workspace')],
     ];
+    const optionalTargets = [
+      ['codex-auth', path.join(dataDir, '.codex')],
+      ['opencode-auth', path.join(dataDir, '.config/opencode')],
+    ];
+    for (const [source, target] of optionalTargets) {
+      if (await exists(path.join(extractDir, source))) {
+        targets.push([source, target]);
+      }
+    }
 
     if (!options.yes) {
       const existing = [];
@@ -124,11 +145,13 @@ export async function verifyRestoredData(dataDir = '/data') {
 function normalizeSources(options) {
   const configDir = path.resolve(expandHome(options.configDir || '~/.openclaw'));
   const secretDir = path.resolve(expandHome(options.secretDir || '~/.config/openclaw'));
+  const codexDir = path.resolve(expandHome(options.codexDir || '~/.codex'));
+  const opencodeDir = path.resolve(expandHome(options.opencodeDir || '~/.config/opencode'));
   const workspaceDir = path.resolve(expandHome(options.workspaceDir || './workspace'));
   for (const [label, value] of Object.entries({ configDir, secretDir, workspaceDir })) {
     if (!value) throw new Error(`${label} is required`);
   }
-  return { configDir, secretDir, workspaceDir };
+  return { configDir, secretDir, codexDir, opencodeDir, workspaceDir };
 }
 
 async function validatePayload(extractDir) {
