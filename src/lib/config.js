@@ -41,19 +41,43 @@ export async function repairConfigForContainer({ dataDir = '/data' } = {}) {
     throw error;
   }
 
-  const load = config.plugins?.load;
-  if (!Array.isArray(load?.paths)) {
-    return { changed: false, configPath };
-  }
+  let changed = false;
+  let removedCount = 0;
 
-  const existingPaths = [];
-  for (const pluginPath of load.paths) {
-    if (await exists(pluginPath)) {
-      existingPaths.push(pluginPath);
+  const load = config.plugins?.load;
+  if (Array.isArray(load?.paths)) {
+    const existingPaths = [];
+    for (const pluginPath of load.paths) {
+      if (await exists(pluginPath)) {
+        existingPaths.push(pluginPath);
+      }
+    }
+    if (existingPaths.length !== load.paths.length) {
+      removedCount += load.paths.length - existingPaths.length;
+      config.plugins.load.paths = existingPaths;
+      changed = true;
     }
   }
 
-  if (existingPaths.length === load.paths.length) {
+  const installs = config.plugins?.installs;
+  if (installs && typeof installs === 'object') {
+    for (const [name, install] of Object.entries(installs)) {
+      const installPath = install?.installPath || install?.sourcePath;
+      if (installPath && !await exists(installPath)) {
+        delete installs[name];
+        removedCount += 1;
+        changed = true;
+      }
+    }
+  }
+
+  const workspace = config.agents?.defaults?.workspace;
+  if (typeof workspace === 'string' && workspace.startsWith('/home/') && workspace.includes('/.openclaw/workspace')) {
+    config.agents.defaults.workspace = path.join(dataDir, 'workspace');
+    changed = true;
+  }
+
+  if (!changed) {
     return { changed: false, configPath };
   }
 
@@ -61,9 +85,8 @@ export async function repairConfigForContainer({ dataDir = '/data' } = {}) {
   if (!await exists(backupPath)) {
     await fs.copyFile(configPath, backupPath);
   }
-  config.plugins.load.paths = existingPaths;
   await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
-  return { changed: true, configPath, backupPath, removedCount: load.paths.length - existingPaths.length };
+  return { changed: true, configPath, backupPath, removedCount };
 }
 
 async function exists(file) {

@@ -28,7 +28,7 @@ test('config init refuses to overwrite by default', async () => {
   }
 });
 
-test('container config repair removes missing plugin load paths and backs up config', async () => {
+test('container config repair removes host-local paths and backs up config', async () => {
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'railclaw-config-'));
   try {
     const configDir = path.join(tmp, '.openclaw');
@@ -41,6 +41,16 @@ test('container config repair removes missing plugin load paths and backs up con
         load: {
           paths: [existingPlugin, '/missing/local/plugin/path'],
         },
+        installs: {
+          stale: {
+            installPath: '/missing/install/path',
+          },
+        },
+      },
+      agents: {
+        defaults: {
+          workspace: '/home/source-user/.openclaw/workspace',
+        },
       },
     })}\n`);
 
@@ -49,6 +59,8 @@ test('container config repair removes missing plugin load paths and backs up con
 
     assert.equal(result.changed, true);
     assert.deepEqual(repaired.plugins.load.paths, [existingPlugin]);
+    assert.deepEqual(repaired.plugins.installs, {});
+    assert.equal(repaired.agents.defaults.workspace, path.join(tmp, 'workspace'));
     assert.equal(await fileExists(`${configPath}.railclaw-pre-container-repair`), true);
   } finally {
     await fs.rm(tmp, { recursive: true, force: true });
