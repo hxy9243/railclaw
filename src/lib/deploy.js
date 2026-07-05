@@ -23,8 +23,8 @@ export async function deploy(options = {}) {
   }
 
   await ensureService(status, service);
-  await ensureVolume(service, environment);
   await ensureVariables(service, environment);
+  let volumeReady = await tryEnsureVolume(service, environment);
 
   if (options.createDomain) {
     await ensureDomain(service, environment);
@@ -35,6 +35,15 @@ export async function deploy(options = {}) {
   if (options.message) args.push('--message', options.message);
   console.log(`deploying ${service} to ${environment} with railway up`);
   await runRailway(args, { stdio: 'inherit' });
+
+  if (!volumeReady) {
+    console.log('retrying /data volume setup after initial deploy');
+    volumeReady = await tryEnsureVolume(service, environment);
+    if (volumeReady && options.detach) {
+      console.log('volume attached after deploy; redeploying detached so OpenClaw starts with /data mounted');
+      await runRailway(args, { stdio: 'inherit' });
+    }
+  }
 }
 
 async function requireRailway() {
@@ -80,6 +89,16 @@ async function ensureVolume(service, environment) {
   }
   console.log('creating Railway volume mounted at /data');
   await runRailway(['volume', '--service', service, '--environment', environment, 'add', '--mount-path', '/data', '--json']);
+}
+
+async function tryEnsureVolume(service, environment) {
+  try {
+    await ensureVolume(service, environment);
+    return true;
+  } catch (error) {
+    console.warn(`warn: could not ensure /data volume yet: ${error.shortMessage || error.message}`);
+    return false;
+  }
 }
 
 async function ensureVariables(service, environment) {
