@@ -26,7 +26,7 @@ railway variable set OPENCLAW_TZ=UTC
 Optional production build pin:
 
 ```bash
-railway variable set OPENCLAW_NPM_PACKAGE=openclaw@2026.6.10
+railway variable set OPENCLAW_NPM_PACKAGE=openclaw@2026.6.11
 ```
 
 Provider/channel credentials should also be Railway variables. Use:
@@ -83,7 +83,6 @@ smoke: ok
 
 For controlled updates, pin:
 
-- `OPENCLAW_NPM_PACKAGE` for the default Dockerfile.
-- `OPENCLAW_IMAGE` if using `Dockerfile.official-image`.
+- `OPENCLAW_NPM_PACKAGE` for the Dockerfile.
 
-Deploy to a non-production environment first when possible, run `railclaw smoke` or `npm run railclaw -- smoke`, and confirm one representative agent flow before promotion.
+Do not default production to `openclaw@latest`; that makes every rebuild a runtime upgrade. Use the weekly upgrade check or a deliberate `OPENCLAW_NPM_PACKAGE=openclaw@VERSION` change, deploy to a non-production environment first when possible, run `railclaw smoke` or `npm run railclaw -- smoke`, and confirm one representative agent flow before promotion.

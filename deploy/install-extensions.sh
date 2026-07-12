@@ -4,7 +4,7 @@ set -euo pipefail
 EXTENSION_DIR="${EXTENSION_DIR:-/tmp/openclaw-extensions}"
 MANIFEST_DIR="${MANIFEST_DIR:-/opt/openclaw-manifests}"
 BUILD_MANIFEST="${BUILD_MANIFEST:-/opt/openclaw-manifests/build-manifest.json}"
-OPENCLAW_NPM_PACKAGE="${OPENCLAW_NPM_PACKAGE:-openclaw@2026.6.10}"
+OPENCLAW_NPM_PACKAGE="${OPENCLAW_NPM_PACKAGE:-openclaw@2026.6.11}"
 EXTRA_APT_PACKAGES="${EXTRA_APT_PACKAGES:-}"
 EXTRA_NPM_PACKAGES="${EXTRA_NPM_PACKAGES:-}"
 EXTRA_PIP_PACKAGES="${EXTRA_PIP_PACKAGES:-}"
@@ -77,7 +77,7 @@ function version(command, args) {
 const dir = process.env.EXTENSION_DIR || '/tmp/openclaw-extensions';
 const manifest = {
   generatedAt: new Date().toISOString(),
-  openclawPackage: process.env.OPENCLAW_NPM_PACKAGE || 'openclaw@2026.6.10',
+  openclawPackage: process.env.OPENCLAW_NPM_PACKAGE || 'openclaw@2026.6.11',
   installPlaywrightBrowsers: process.env.INSTALL_PLAYWRIGHT_BROWSERS || '1',
   manifests: {
     apt: lines(`${dir}/apt.txt`),

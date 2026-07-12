@@ -9,8 +9,8 @@ This repo deploys OpenClaw to Railway with a Node.js CLI named `railclaw`. Keep 
 - `/home/node/.openclaw` must resolve to `/data/.openclaw`.
 - `/home/node/.config/openclaw` must resolve to `/data/.config/openclaw`.
 - The deployed gateway must listen on `OPENCLAW_GATEWAY_PORT`, normally `8080`.
-- The primary Dockerfile installs OpenClaw from npm for verifiable public builds. `Dockerfile.official-image` is the optional official-image variant.
-- Pin `OPENCLAW_NPM_PACKAGE` or `OPENCLAW_IMAGE` for production repeatability.
+- The Dockerfile installs OpenClaw from npm for verifiable public builds.
+- Pin `OPENCLAW_NPM_PACKAGE` for production repeatability.
 - Keep examples placeholder-only.
 - Run `npm test` and `npm run check` before finalizing changes.
 
@@ -21,7 +21,6 @@ This repo deploys OpenClaw to Railway with a Node.js CLI named `railclaw`. Keep 
 - `src/lib/migration.js`: unified config/auth/workspace migration.
 - `src/container/entrypoint.js`: creates `/data` directories and home symlinks before starting OpenClaw.
 - `Dockerfile`: Railway image using the pinned npm package path.
-- `Dockerfile.official-image`: optional image that inherits `ghcr.io/openclaw/openclaw`.
 - `railway.json`: Railway build and deploy config.
 - `Makefile`: thin workflow surface.
 - `README.md`: human deployment guide.
@@ -86,5 +85,5 @@ After restore, restart or redeploy with the official Railway CLI and run a smoke
 - `git ls-files` does not include state, archive, `.env`, or local Railway files.
 - No tracked file contains a personal home path.
 - No tracked file contains real-looking API keys or gateway tokens.
-- Dockerfiles still use `src/container/entrypoint.js`.
+- Dockerfile still uses `src/container/entrypoint.js`.
 - Docs and tests agree on `/data/.openclaw`, `/data/.config/openclaw`, `/data/workspace`, and home symlinks.

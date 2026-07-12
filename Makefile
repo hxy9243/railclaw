@@ -1,7 +1,7 @@
 .PHONY: build check deploy doctor migrate smoke token validate
 
 IMAGE_NAME ?= railclaw-openclaw
-OPENCLAW_NPM_PACKAGE ?= openclaw@2026.6.10
+OPENCLAW_NPM_PACKAGE ?= openclaw@2026.6.11
 EXTRA_APT_PACKAGES ?=
 EXTRA_NPM_PACKAGES ?=
 EXTRA_PIP_PACKAGES ?=

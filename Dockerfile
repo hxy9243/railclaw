@@ -1,17 +1,14 @@
 # syntax=docker/dockerfile:1.7
 #
-# Railway deploy image for OpenClaw using the npm package path.
-#
-# The official OpenClaw image path is kept in Dockerfile.official-image for
-# environments where ghcr.io/openclaw/openclaw is available anonymously or via
-# registry credentials. This Dockerfile is the default because it can be built
-# from public npm and Debian/Node images without GHCR package access.
+# Railway deploy image for OpenClaw. The OpenClaw runtime package is pinned by
+# default for repeatable deploys; override OPENCLAW_NPM_PACKAGE deliberately
+# when testing an upgrade.
 FROM node:24-bookworm-slim
 
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG OPENCLAW_NPM_PACKAGE=openclaw@2026.6.10
+ARG OPENCLAW_NPM_PACKAGE=openclaw@2026.6.11
 ARG EXTRA_APT_PACKAGES=""
 ARG EXTRA_NPM_PACKAGES=""
 ARG EXTRA_PIP_PACKAGES=""

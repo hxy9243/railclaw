@@ -17,6 +17,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Check latest OpenClaw
+        run: node tools/upgrades/check-openclaw-version.js
       - name: Report npm updates
         run: npm outdated || true
       - name: Build minimal image

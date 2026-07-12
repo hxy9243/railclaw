@@ -23,6 +23,8 @@ Implemented the MVP repository pivot from a deploy helper toward a reproducible 
 - Added a smoke-test workflow for the terminal setup path.
 - Simplified `README.md` around the fork/customize/deploy/setup user journey.
 - Added `config/distribution.yaml`, `tools/README.md`, and `AGENTS.md`.
+- Removed the unused alternate official-image Dockerfile so there is one supported Railway image path.
+- Added an explicit OpenClaw version check for the weekly upgrade workflow.
 
 ## Engineering Judgment
 

@@ -28,7 +28,7 @@ openclaw-railway doctor
 
 ## What This Repo Defines
 
-- Pinned OpenClaw npm package: `openclaw@2026.6.10`.
+- Pinned OpenClaw npm package: `openclaw@2026.6.11`.
 - Build-time extension manifests for system, Node.js, Python, browser, and future skill packages.
 - A Railway-ready Docker image.
 - Persistent `/data` state layout.
@@ -64,6 +64,10 @@ extensions/skills.yaml  Future skill/plugin manifest
 ```
 
 Use pinned versions for production forks where possible. Dependabot and the weekly workflow are intended to propose upgrades instead of resolving `latest` during each deploy.
+
+Do not use `openclaw@latest` as the production default unless you explicitly want every rebuild to be an OpenClaw upgrade. For one-off testing, override `OPENCLAW_NPM_PACKAGE=openclaw@latest`; for production, update the pinned version and let CI build/smoke-test it before deploy.
+
+The weekly upgrade workflow runs `tools/upgrades/check-openclaw-version.js` to compare the Dockerfile pin with the latest npm OpenClaw release.
 
 You can append packages at build time with Railway build args:
 
