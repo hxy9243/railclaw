@@ -23,8 +23,9 @@ Implemented the MVP repository pivot from a deploy helper toward a reproducible 
 - Added a smoke-test workflow for the terminal setup path.
 - Simplified `README.md` around the fork/customize/deploy/setup user journey.
 - Added `config/distribution.yaml`, `tools/README.md`, and `AGENTS.md`.
-- Removed the unused alternate official-image Dockerfile so there is one supported Railway image path.
-- Added an explicit OpenClaw version check for the weekly upgrade workflow.
+- Switched the single supported Railway Dockerfile to inherit from the official OpenClaw image.
+- Defaulted the base to `alpine/openclaw:latest` because the documented GHCR path requires registry authorization in this environment.
+- Added an explicit OpenClaw image check for the weekly upgrade workflow.
 
 ## Engineering Judgment
 
@@ -41,7 +42,7 @@ Ran:
 npm test
 npm run check
 git diff --check
-docker build --build-arg INSTALL_PLAYWRIGHT_BROWSERS=0 -t openclaw-railway:audit .
+docker build --pull --build-arg OPENCLAW_INSTALL_BROWSER=0 --build-arg INSTALL_PLAYWRIGHT_BROWSERS=0 -t openclaw-railway:audit .
 ```
 
 All checks passed after each implementation stage.

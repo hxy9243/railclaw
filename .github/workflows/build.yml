@@ -14,9 +14,11 @@ jobs:
       - name: Build image
         run: |
           docker build \
+            --pull \
+            --build-arg OPENCLAW_INSTALL_BROWSER=0 \
             --build-arg INSTALL_PLAYWRIGHT_BROWSERS=0 \
             -t openclaw-railway:${{ github.sha }} .
       - name: Inspect build manifest
         run: |
           docker run --rm --entrypoint node openclaw-railway:${{ github.sha }} \
-            -e "console.log(require('/opt/openclaw-manifests/build-manifest.json'))"
+            -e "const m=require('/opt/openclaw-manifests/build-manifest.json'); if (!m.openclawImage) process.exit(1); console.log(m)"

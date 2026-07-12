@@ -4,11 +4,15 @@ set -euo pipefail
 EXTENSION_DIR="${EXTENSION_DIR:-/tmp/openclaw-extensions}"
 MANIFEST_DIR="${MANIFEST_DIR:-/opt/openclaw-manifests}"
 BUILD_MANIFEST="${BUILD_MANIFEST:-/opt/openclaw-manifests/build-manifest.json}"
-OPENCLAW_NPM_PACKAGE="${OPENCLAW_NPM_PACKAGE:-openclaw@2026.6.11}"
+OPENCLAW_IMAGE="${OPENCLAW_IMAGE:-alpine/openclaw:latest}"
+OPENCLAW_IMAGE_APT_PACKAGES="${OPENCLAW_IMAGE_APT_PACKAGES:-}"
+OPENCLAW_DOCKER_APT_PACKAGES="${OPENCLAW_DOCKER_APT_PACKAGES:-}"
+OPENCLAW_IMAGE_PIP_PACKAGES="${OPENCLAW_IMAGE_PIP_PACKAGES:-}"
+OPENCLAW_INSTALL_BROWSER="${OPENCLAW_INSTALL_BROWSER:-1}"
 EXTRA_APT_PACKAGES="${EXTRA_APT_PACKAGES:-}"
 EXTRA_NPM_PACKAGES="${EXTRA_NPM_PACKAGES:-}"
 EXTRA_PIP_PACKAGES="${EXTRA_PIP_PACKAGES:-}"
-INSTALL_PLAYWRIGHT_BROWSERS="${INSTALL_PLAYWRIGHT_BROWSERS:-1}"
+INSTALL_PLAYWRIGHT_BROWSERS="${INSTALL_PLAYWRIGHT_BROWSERS:-$OPENCLAW_INSTALL_BROWSER}"
 
 read_manifest() {
   local file="$1"
@@ -22,9 +26,17 @@ join_lines_and_words() {
   tr '\n' ' ' | xargs echo "$@"
 }
 
-apt_packages="$(read_manifest "$EXTENSION_DIR/apt.txt" | join_lines_and_words) ${EXTRA_APT_PACKAGES}"
-npm_packages="${OPENCLAW_NPM_PACKAGE} $(read_manifest "$EXTENSION_DIR/npm.txt" | join_lines_and_words) ${EXTRA_NPM_PACKAGES}"
-pip_packages="$(read_manifest "$EXTENSION_DIR/pip.txt" | join_lines_and_words) ${EXTRA_PIP_PACKAGES}"
+is_truthy() {
+  case "${1:-}" in
+    1|true|TRUE|yes|YES|on|ON) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+official_apt_packages="${OPENCLAW_IMAGE_APT_PACKAGES:-$OPENCLAW_DOCKER_APT_PACKAGES}"
+apt_packages="$(read_manifest "$EXTENSION_DIR/apt.txt" | join_lines_and_words) ${official_apt_packages} ${EXTRA_APT_PACKAGES}"
+npm_packages="$(read_manifest "$EXTENSION_DIR/npm.txt" | join_lines_and_words) ${EXTRA_NPM_PACKAGES}"
+pip_packages="$(read_manifest "$EXTENSION_DIR/pip.txt" | join_lines_and_words) ${OPENCLAW_IMAGE_PIP_PACKAGES} ${EXTRA_PIP_PACKAGES}"
 pip_requirements="$EXTENSION_DIR/requirements.txt"
 
 if [ -n "$(echo "$apt_packages" | xargs)" ]; then
@@ -46,8 +58,15 @@ if [ -n "$(echo "$pip_packages" | xargs)" ]; then
   python3 -m pip install --break-system-packages $pip_packages
 fi
 
-if [ "$INSTALL_PLAYWRIGHT_BROWSERS" = "1" ]; then
-  npx playwright install --with-deps chromium
+if is_truthy "$INSTALL_PLAYWRIGHT_BROWSERS"; then
+  apt-get update
+  apt-get install -y --no-install-recommends xvfb
+  rm -rf /var/lib/apt/lists/*
+  if [ -f /app/node_modules/playwright-core/cli.js ]; then
+    node /app/node_modules/playwright-core/cli.js install --with-deps chromium
+  else
+    npx playwright install --with-deps chromium
+  fi
 fi
 
 mkdir -p "$MANIFEST_DIR"
@@ -77,8 +96,8 @@ function version(command, args) {
 const dir = process.env.EXTENSION_DIR || '/tmp/openclaw-extensions';
 const manifest = {
   generatedAt: new Date().toISOString(),
-  openclawPackage: process.env.OPENCLAW_NPM_PACKAGE || 'openclaw@2026.6.11',
-  installPlaywrightBrowsers: process.env.INSTALL_PLAYWRIGHT_BROWSERS || '1',
+  openclawImage: process.env.OPENCLAW_IMAGE || 'alpine/openclaw:latest',
+  installPlaywrightBrowsers: process.env.INSTALL_PLAYWRIGHT_BROWSERS || process.env.OPENCLAW_INSTALL_BROWSER || '1',
   manifests: {
     apt: lines(`${dir}/apt.txt`),
     npm: lines(`${dir}/npm.txt`),
@@ -86,9 +105,9 @@ const manifest = {
     pythonRequirements: lines(`${dir}/requirements.txt`),
   },
   extra: {
-    apt: process.env.EXTRA_APT_PACKAGES || '',
+    apt: [process.env.OPENCLAW_IMAGE_APT_PACKAGES || process.env.OPENCLAW_DOCKER_APT_PACKAGES || '', process.env.EXTRA_APT_PACKAGES || ''].filter(Boolean).join(' '),
     npm: process.env.EXTRA_NPM_PACKAGES || '',
-    pip: process.env.EXTRA_PIP_PACKAGES || '',
+    pip: [process.env.OPENCLAW_IMAGE_PIP_PACKAGES || '', process.env.EXTRA_PIP_PACKAGES || ''].filter(Boolean).join(' '),
   },
   versions: {
     node: version('node', ['--version']),

@@ -28,9 +28,9 @@ openclaw-railway doctor
 
 ## What This Repo Defines
 
-- Pinned OpenClaw npm package: `openclaw@2026.6.11`.
+- OpenClaw base image: `alpine/openclaw:latest`, the public Docker Hub mirror of the official OpenClaw image.
 - Build-time extension manifests for system, Node.js, Python, browser, and future skill packages.
-- A Railway-ready Docker image.
+- A Railway-ready Docker image layered on the official OpenClaw image.
 - Persistent `/data` state layout.
 - Terminal setup, status, doctor, migration, and smoke-test helpers.
 - Dependabot and GitHub Actions checks for upgrades and builds.
@@ -63,20 +63,20 @@ extensions/browsers.yaml Browser intent
 extensions/skills.yaml  Future skill/plugin manifest
 ```
 
-Use pinned versions for production forks where possible. Dependabot and the weekly workflow are intended to propose upgrades instead of resolving `latest` during each deploy.
+The Dockerfile inherits from `alpine/openclaw:latest` by default and CI builds with `--pull`, so rebuilds pick up the current OpenClaw image. Override `OPENCLAW_IMAGE` if you have credentials for `ghcr.io/openclaw/openclaw`, or use a specific tag/digest for stricter production repeatability.
 
-Do not use `openclaw@latest` as the production default unless you explicitly want every rebuild to be an OpenClaw upgrade. For one-off testing, override `OPENCLAW_NPM_PACKAGE=openclaw@latest`; for production, update the pinned version and let CI build/smoke-test it before deploy.
-
-The weekly upgrade workflow runs `tools/upgrades/check-openclaw-version.js` to compare the Dockerfile pin with the latest npm OpenClaw release.
+The weekly upgrade workflow runs `tools/upgrades/check-openclaw-image.js` to report the current official image selector and registry digest.
 
 You can append packages at build time with Railway build args:
 
 ```text
+OPENCLAW_IMAGE
+OPENCLAW_IMAGE_APT_PACKAGES
+OPENCLAW_IMAGE_PIP_PACKAGES
+OPENCLAW_INSTALL_BROWSER
 EXTRA_APT_PACKAGES
 EXTRA_NPM_PACKAGES
 EXTRA_PIP_PACKAGES
-INSTALL_PLAYWRIGHT_BROWSERS
-OPENCLAW_NPM_PACKAGE
 ```
 
 ## Local Checks
@@ -85,7 +85,7 @@ OPENCLAW_NPM_PACKAGE
 npm ci
 npm test
 npm run check
-docker build --build-arg INSTALL_PLAYWRIGHT_BROWSERS=0 -t openclaw-railway .
+docker build --pull --build-arg OPENCLAW_INSTALL_BROWSER=0 --build-arg INSTALL_PLAYWRIGHT_BROWSERS=0 -t openclaw-railway .
 ```
 
 ## Setup Commands

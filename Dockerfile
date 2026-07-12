@@ -1,23 +1,30 @@
 # syntax=docker/dockerfile:1.7
 #
-# Railway deploy image for OpenClaw. The OpenClaw runtime package is pinned by
-# default for repeatable deploys; override OPENCLAW_NPM_PACKAGE deliberately
-# when testing an upgrade.
-FROM node:24-bookworm-slim
+# Railway deploy image for OpenClaw. Inherit the official runtime image and add
+# this repository's Railway setup layer plus manifest-driven extensions.
+ARG OPENCLAW_IMAGE=alpine/openclaw:latest
+FROM ${OPENCLAW_IMAGE}
 
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG OPENCLAW_NPM_PACKAGE=openclaw@2026.6.11
-ARG EXTRA_APT_PACKAGES=""
+ARG OPENCLAW_IMAGE_APT_PACKAGES=""
+ARG OPENCLAW_DOCKER_APT_PACKAGES=""
+ARG OPENCLAW_IMAGE_PIP_PACKAGES=""
+ARG OPENCLAW_INSTALL_BROWSER=1
 ARG EXTRA_NPM_PACKAGES=""
+ARG EXTRA_APT_PACKAGES=""
 ARG EXTRA_PIP_PACKAGES=""
-ARG INSTALL_PLAYWRIGHT_BROWSERS=1
+ARG INSTALL_PLAYWRIGHT_BROWSERS=""
 
 COPY extensions /tmp/openclaw-extensions
 COPY deploy/install-extensions.sh /usr/local/bin/install-openclaw-extensions
 RUN chmod +x /usr/local/bin/install-openclaw-extensions \
-  && OPENCLAW_NPM_PACKAGE="${OPENCLAW_NPM_PACKAGE}" \
+  && OPENCLAW_IMAGE="${OPENCLAW_IMAGE}" \
+    OPENCLAW_IMAGE_APT_PACKAGES="${OPENCLAW_IMAGE_APT_PACKAGES}" \
+    OPENCLAW_DOCKER_APT_PACKAGES="${OPENCLAW_DOCKER_APT_PACKAGES}" \
+    OPENCLAW_IMAGE_PIP_PACKAGES="${OPENCLAW_IMAGE_PIP_PACKAGES}" \
+    OPENCLAW_INSTALL_BROWSER="${OPENCLAW_INSTALL_BROWSER}" \
     EXTRA_APT_PACKAGES="${EXTRA_APT_PACKAGES}" \
     EXTRA_NPM_PACKAGES="${EXTRA_NPM_PACKAGES}" \
     EXTRA_PIP_PACKAGES="${EXTRA_PIP_PACKAGES}" \

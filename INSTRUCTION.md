@@ -9,8 +9,8 @@ This repo deploys OpenClaw to Railway with a Node.js CLI named `railclaw`. Keep 
 - `/home/node/.openclaw` must resolve to `/data/.openclaw`.
 - `/home/node/.config/openclaw` must resolve to `/data/.config/openclaw`.
 - The deployed gateway must listen on `OPENCLAW_GATEWAY_PORT`, normally `8080`.
-- The Dockerfile installs OpenClaw from npm for verifiable public builds.
-- Pin `OPENCLAW_NPM_PACKAGE` for production repeatability.
+- The Dockerfile inherits from the official OpenClaw image and adds Railway setup plus extensions.
+- Override `OPENCLAW_IMAGE` for production repeatability when a moving `latest` tag is not desired.
 - Keep examples placeholder-only.
 - Run `npm test` and `npm run check` before finalizing changes.
 
@@ -20,7 +20,7 @@ This repo deploys OpenClaw to Railway with a Node.js CLI named `railclaw`. Keep 
 - `src/cli/index.js`: CLI command routing.
 - `src/lib/migration.js`: unified config/auth/workspace migration.
 - `src/container/entrypoint.js`: creates `/data` directories and home symlinks before starting OpenClaw.
-- `Dockerfile`: Railway image using the pinned npm package path.
+- `Dockerfile`: Railway image layered on `alpine/openclaw`, the public mirror of the official OpenClaw image.
 - `railway.json`: Railway build and deploy config.
 - `Makefile`: thin workflow surface.
 - `README.md`: human deployment guide.

@@ -23,10 +23,10 @@ railway variable set OPENCLAW_GATEWAY_BIND=lan
 railway variable set OPENCLAW_TZ=UTC
 ```
 
-Optional production build pin:
+Optional production base image override:
 
 ```bash
-railway variable set OPENCLAW_NPM_PACKAGE=openclaw@2026.6.11
+railway variable set OPENCLAW_IMAGE=alpine/openclaw:latest
 ```
 
 Provider/channel credentials should also be Railway variables. Use:
@@ -83,6 +83,6 @@ smoke: ok
 
 For controlled updates, pin:
 
-- `OPENCLAW_NPM_PACKAGE` for the Dockerfile.
+- `OPENCLAW_IMAGE` for the Dockerfile.
 
-Do not default production to `openclaw@latest`; that makes every rebuild a runtime upgrade. Use the weekly upgrade check or a deliberate `OPENCLAW_NPM_PACKAGE=openclaw@VERSION` change, deploy to a non-production environment first when possible, run `railclaw smoke` or `npm run railclaw -- smoke`, and confirm one representative agent flow before promotion.
+The default is `alpine/openclaw:latest`, the public mirror of the official OpenClaw image. CI builds with `--pull` so rebuilds pick up the current image. For stricter production repeatability, set `OPENCLAW_IMAGE` to a specific tag or digest, deploy to a non-production environment first when possible, run `railclaw smoke` or `npm run railclaw -- smoke`, and confirm one representative agent flow before promotion.

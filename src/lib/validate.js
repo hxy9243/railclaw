@@ -44,8 +44,11 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   const railway = await read(root, 'railway.json');
   const makefile = await read(root, 'Makefile');
 
-  requireContains(dockerfile, 'FROM node:24-bookworm-slim', 'Dockerfile must use the npm-install Node base', failures);
-  requireContains(dockerfile, 'OPENCLAW_NPM_PACKAGE=openclaw@', 'Dockerfile must pin an OpenClaw npm package by default', failures);
+  requireContains(dockerfile, 'ARG OPENCLAW_IMAGE=alpine/openclaw:latest', 'Dockerfile must inherit the public OpenClaw image by default', failures);
+  requireContains(dockerfile, 'FROM ${OPENCLAW_IMAGE}', 'Dockerfile must use the configured OpenClaw base image', failures);
+  requireContains(dockerfile, 'OPENCLAW_IMAGE_APT_PACKAGES', 'Dockerfile must expose the official apt package build arg', failures);
+  requireContains(dockerfile, 'OPENCLAW_IMAGE_PIP_PACKAGES', 'Dockerfile must expose the official pip package build arg', failures);
+  requireContains(dockerfile, 'OPENCLAW_INSTALL_BROWSER', 'Dockerfile must expose the official browser install build arg', failures);
   requireContains(dockerfile, 'COPY extensions /tmp/openclaw-extensions', 'Dockerfile must copy extension manifests into the build', failures);
   requireContains(dockerfile, 'install-openclaw-extensions', 'Dockerfile must install packages through the extension installer', failures);
   requireContains(dockerfile, '/usr/local/bin/openclaw-railway', 'Dockerfile must expose the openclaw-railway command', failures);
@@ -53,6 +56,7 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
   requireContains(dockerfile, 'src/container/entrypoint.js', 'Dockerfile must use the Railclaw container entrypoint', failures);
   requireContains(railway, '"healthcheckPath": "/healthz"', 'Railway healthcheck must use /healthz', failures);
+  requireContains(makefile, '--build-arg OPENCLAW_IMAGE="$(OPENCLAW_IMAGE)"', 'Makefile build target must pass the OpenClaw image build arg', failures);
   requireContains(makefile, 'node bin/railclaw.js deploy', 'Makefile deploy target must use the Railclaw deploy helper', failures);
   if (makefile.includes(`railclaw ${'railway'}`)) {
     failures.push('Makefile must not expose Railway wrapper commands through railclaw');

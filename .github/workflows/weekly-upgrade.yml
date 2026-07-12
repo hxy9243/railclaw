@@ -17,13 +17,15 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Check latest OpenClaw
-        run: node tools/upgrades/check-openclaw-version.js
+      - name: Check OpenClaw image
+        run: node tools/upgrades/check-openclaw-image.js
       - name: Report npm updates
         run: npm outdated || true
       - name: Build minimal image
         run: |
           docker build \
+            --pull \
+            --build-arg OPENCLAW_INSTALL_BROWSER=0 \
             --build-arg INSTALL_PLAYWRIGHT_BROWSERS=0 \
             -t openclaw-railway:weekly-upgrade-check .
       - name: Check runtime tools
