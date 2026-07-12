@@ -1,0 +1,22 @@
+name: Build Image
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: |
+          docker build \
+            --build-arg INSTALL_PLAYWRIGHT_BROWSERS=0 \
+            -t openclaw-railway:${{ github.sha }} .
+      - name: Inspect build manifest
+        run: |
+          docker run --rm --entrypoint node openclaw-railway:${{ github.sha }} \
+            -e "console.log(require('/opt/openclaw-manifests/build-manifest.json'))"

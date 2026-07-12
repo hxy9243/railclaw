@@ -1,0 +1,30 @@
+name: Weekly Upgrade Check
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Report npm updates
+        run: npm outdated || true
+      - name: Build minimal image
+        run: |
+          docker build \
+            --build-arg INSTALL_PLAYWRIGHT_BROWSERS=0 \
+            -t openclaw-railway:weekly-upgrade-check .
+      - name: Check runtime tools
+        run: |
+          docker run --rm --entrypoint node openclaw-railway:weekly-upgrade-check \
+            -e "const m=require('/opt/openclaw-manifests/build-manifest.json'); if (!m.versions.openclaw) process.exit(1); console.log(m.versions)"
