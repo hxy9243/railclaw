@@ -50,9 +50,11 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'OPENCLAW_NPM_PACKAGE=openclaw@', 'Dockerfile must pin an OpenClaw npm package by default', failures);
   requireContains(dockerfile, 'COPY extensions /tmp/openclaw-extensions', 'Dockerfile must copy extension manifests into the build', failures);
   requireContains(dockerfile, 'install-openclaw-extensions', 'Dockerfile must install packages through the extension installer', failures);
+  requireContains(dockerfile, '/usr/local/bin/openclaw-railway', 'Dockerfile must expose the openclaw-railway command', failures);
   requireContains(officialDockerfile, 'FROM ${OPENCLAW_IMAGE}', 'official-image variant must inherit the configured official OpenClaw image', failures);
   requireContains(officialDockerfile, 'COPY extensions /tmp/openclaw-extensions', 'official-image variant must copy extension manifests into the build', failures);
   requireContains(officialDockerfile, 'install-openclaw-extensions', 'official-image variant must install packages through the extension installer', failures);
+  requireContains(officialDockerfile, '/usr/local/bin/openclaw-railway', 'official-image variant must expose the openclaw-railway command', failures);
   requireContains(dockerfile, 'OPENCLAW_CONFIG_DIR=/data/.openclaw', 'Dockerfile must pin config to /data', failures);
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
   requireContains(dockerfile, 'src/container/entrypoint.js', 'Dockerfile must use the Railclaw container entrypoint', failures);

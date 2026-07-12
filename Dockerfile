@@ -37,6 +37,9 @@ RUN npm ci --omit=dev \
   && npm cache clean --force
 COPY --chown=node:node bin /opt/railclaw/bin
 COPY --chown=node:node src /opt/railclaw/src
+RUN chmod +x /opt/railclaw/bin/railclaw.js \
+  && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/railclaw \
+  && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/openclaw-railway
 
 ENV HOME=/home/node \
   OPENCLAW_HOME=/home/node \

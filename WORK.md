@@ -16,6 +16,7 @@ Implemented the MVP repository pivot from a deploy helper toward a reproducible 
 - Added build manifest generation at `/opt/openclaw-manifests/build-manifest.json`.
 - Added persistent distribution state under `/data/.openclaw-distribution/state.json`.
 - Added `openclaw-railway` as a command alias for the existing runtime CLI.
+- Exposed `railclaw` and `openclaw-railway` as image commands in `/usr/local/bin`.
 - Added `setup` and `status` commands for terminal-based initialization.
 - Updated `doctor` to include persistent setup status.
 - Added Dependabot and GitHub Actions workflows for validation, Docker builds, and weekly upgrade checks.
@@ -38,6 +39,7 @@ Ran:
 npm test
 npm run check
 git diff --check
+docker build --build-arg INSTALL_PLAYWRIGHT_BROWSERS=0 -t openclaw-railway:audit .
 ```
 
 All checks passed after each implementation stage.
