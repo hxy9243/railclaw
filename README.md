@@ -26,6 +26,27 @@ openclaw-railway doctor
 8. Add the printed `OPENCLAW_GATEWAY_TOKEN` as a Railway variable, then redeploy or restart.
 9. Open the public Railway URL.
 
+## Dependabot Auto-Merge
+
+This repo includes `.github/workflows/dependabot-automerge.yml`. It only runs for
+Dependabot pull requests, approves the PR, then enables GitHub auto-merge with a
+squash merge. Required checks still have to pass before GitHub merges the PR.
+
+Enable the required GitHub repository settings after forking:
+
+1. Go to **Settings > General > Pull Requests** and enable **Allow auto-merge**.
+2. Go to **Settings > Actions > General > Workflow permissions**.
+3. Select **Read and write permissions** or keep the default read permission and
+   rely on the workflow's explicit `contents: write` and `pull-requests: write`
+   permissions.
+4. Enable **Allow GitHub Actions to create and approve pull requests**.
+5. Keep branch protection or required status checks enabled for `main` if you
+   want Dependabot PRs to merge only after `Validate`, `Build Image`, and
+   `Smoke Test` succeed.
+
+If you merge Dependabot PRs from a local `gh` session, the token also needs the
+`workflow` scope whenever the PR changes files under `.github/workflows`.
+
 ## What This Repo Defines
 
 - OpenClaw base image: `alpine/openclaw:latest`, the public Docker Hub mirror of the official OpenClaw image.

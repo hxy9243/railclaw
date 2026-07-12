@@ -32,8 +32,13 @@ RUN chmod +x /usr/local/bin/install-openclaw-extensions \
     install-openclaw-extensions
 
 RUN mkdir -p /data/.openclaw /data/workspace /data/.config/openclaw \
+  /opt/railclaw \
   /home/node/.config \
-  && chown -R node:node /data /home/node /opt/openclaw-manifests
+  && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/railclaw \
+  && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/openclaw-railway \
+  && chown -R node:node /data /home/node /opt/openclaw-manifests /opt/railclaw
+
+USER node
 
 WORKDIR /opt/railclaw
 COPY --chown=node:node package.json package-lock.json ./
@@ -41,9 +46,11 @@ RUN npm ci --omit=dev \
   && npm cache clean --force
 COPY --chown=node:node bin /opt/railclaw/bin
 COPY --chown=node:node src /opt/railclaw/src
-RUN chmod +x /opt/railclaw/bin/railclaw.js \
-  && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/railclaw \
-  && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/openclaw-railway
+RUN chmod +x /opt/railclaw/bin/railclaw.js
+
+# Railway mounts fresh volumes as root. The entrypoint starts as root only to
+# repair /data ownership and then spawns OpenClaw as the node user.
+USER root
 
 ENV HOME=/home/node \
   OPENCLAW_HOME=/home/node \
