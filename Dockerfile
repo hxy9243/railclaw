@@ -31,12 +31,11 @@ RUN chmod +x /usr/local/bin/install-openclaw-extensions \
     INSTALL_PLAYWRIGHT_BROWSERS="${INSTALL_PLAYWRIGHT_BROWSERS}" \
     install-openclaw-extensions
 
-RUN mkdir -p /data/.openclaw /data/workspace /data/.config/openclaw \
-  /opt/railclaw \
+RUN mkdir -p /opt/railclaw \
   /home/node/.config \
   && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/railclaw \
   && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/openclaw-railway \
-  && chown -R node:node /data /home/node /opt/openclaw-manifests /opt/railclaw
+  && chown -R node:node /home/node /opt/openclaw-manifests /opt/railclaw
 
 USER node
 
