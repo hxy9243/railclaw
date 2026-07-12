@@ -10,4 +10,6 @@ test('Dockerfile builds app as node and starts root bootstrap for Railway volume
   assert.ok(appInstall, 'npm install layer should run as node');
   assert.ok(runtimeBootstrap, 'entrypoint should start as root so Railway /data ownership can be repaired');
   assert.match(dockerfile, /spawns OpenClaw as the node user/);
+  assert.doesNotMatch(dockerfile, /mkdir -p \/data/, 'runtime entrypoint should initialize mounted /data');
+  assert.doesNotMatch(dockerfile, /chown -R node:node \/data/, 'runtime entrypoint should own mounted /data');
 });
