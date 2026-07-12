@@ -9,6 +9,7 @@ const REQUIRED_FILES = [
   'railway.json',
   '.env.example',
   'config/openclaw.example.json',
+  'config/distribution.yaml',
   'package.json',
   'package-lock.json',
   'extensions/apt.txt',
@@ -23,6 +24,8 @@ const REQUIRED_FILES = [
   'src/cli/index.js',
   'src/container/entrypoint.js',
   'README.md',
+  'AGENTS.md',
+  'tools/README.md',
   'INSTRUCTION.md',
 ];
 

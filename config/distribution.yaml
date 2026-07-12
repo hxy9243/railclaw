@@ -1,0 +1,18 @@
+openclaw:
+  package: openclaw@2026.6.10
+
+profile: developer
+
+runtime:
+  dataDir: /data
+  stateDir: /data/.openclaw
+  distributionDir: /data/.openclaw-distribution
+  workspaceDir: /data/workspace
+  gatewayPort: 8080
+
+extensions:
+  apt: extensions/apt.txt
+  npm: extensions/npm.txt
+  pip: extensions/pip.txt
+  browsers: extensions/browsers.yaml
+  skills: extensions/skills.yaml
