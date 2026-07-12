@@ -6,7 +6,7 @@
 # environments where ghcr.io/openclaw/openclaw is available anonymously or via
 # registry credentials. This Dockerfile is the default because it can be built
 # from public npm and Debian/Node images without GHCR package access.
-FROM node:24-bookworm-slim
+FROM node:26-bookworm-slim
 
 USER root
 
