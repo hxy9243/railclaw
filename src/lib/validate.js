@@ -9,6 +9,8 @@ const REQUIRED_FILES = [
   '.railway/railway.ts',
   '.env.example',
   'config/openclaw.example.json',
+  'config/openclaw.bootstrap.json',
+  'config/openclaw-distribution-state.bootstrap.json',
   'config/distribution.yaml',
   'package.json',
   'package-lock.json',
@@ -21,14 +23,15 @@ const REQUIRED_FILES = [
   '.github/workflows/validate.yml',
   '.github/workflows/build.yml',
   '.github/workflows/smoke-test.yml',
+  '.github/workflows/dependabot-automerge.yml',
   '.github/workflows/weekly-upgrade.yml',
   'bin/railclaw.js',
   'src/cli/index.js',
   'src/container/entrypoint.js',
   'README.md',
   'AGENTS.md',
+  'skills/BOOTSTRAP.md',
   'tools/README.md',
-  'INSTRUCTION.md',
 ];
 
 export async function validateRepository({ root = repoRoot() } = {}) {
@@ -39,12 +42,17 @@ export async function validateRepository({ root = repoRoot() } = {}) {
 
   await validateJson(root, 'railway.json', failures);
   await validateJson(root, 'config/openclaw.example.json', failures);
+  await validateJson(root, 'config/openclaw.bootstrap.json', failures);
+  await validateJson(root, 'config/openclaw-distribution-state.bootstrap.json', failures);
   await validateJson(root, 'package.json', failures);
 
   const dockerfile = await read(root, 'Dockerfile');
   const railway = await read(root, 'railway.json');
   const railwayTemplate = await read(root, '.railway/railway.ts');
-  const makefile = await read(root, 'Makefile');
+  const agents = await read(root, 'AGENTS.md');
+  const bootstrap = await read(root, 'skills/BOOTSTRAP.md');
+  const dependabot = await read(root, '.github/dependabot.yml');
+  const weeklyUpgrade = await read(root, '.github/workflows/weekly-upgrade.yml');
 
   requireContains(dockerfile, 'ARG OPENCLAW_IMAGE=alpine/openclaw:latest', 'Dockerfile must inherit the public OpenClaw image by default', failures);
   requireContains(dockerfile, 'FROM ${OPENCLAW_IMAGE}', 'Dockerfile must use the configured OpenClaw base image', failures);
@@ -52,6 +60,7 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'OPENCLAW_IMAGE_PIP_PACKAGES', 'Dockerfile must expose the official pip package build arg', failures);
   requireContains(dockerfile, 'OPENCLAW_INSTALL_BROWSER', 'Dockerfile must expose the official browser install build arg', failures);
   requireContains(dockerfile, 'COPY extensions /tmp/openclaw-extensions', 'Dockerfile must copy extension manifests into the build', failures);
+  requireContains(dockerfile, 'COPY --chown=node:node config /opt/railclaw/config', 'Dockerfile must copy bootstrap config templates into the image', failures);
   requireContains(dockerfile, 'install-openclaw-extensions', 'Dockerfile must install packages through the extension installer', failures);
   requireContains(dockerfile, '/usr/local/bin/openclaw-railway', 'Dockerfile must expose the openclaw-railway command', failures);
   requireContains(dockerfile, 'OPENCLAW_CONFIG_DIR=/data/.openclaw', 'Dockerfile must pin config to /data', failures);
@@ -61,11 +70,15 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(railwayTemplate, 'volume("openclaw-volume"', 'Railway IaC must define the OpenClaw volume', failures);
   requireContains(railwayTemplate, '"/data": data', 'Railway IaC must mount the volume at /data', failures);
   requireContains(railwayTemplate, 'source: github(repo', 'Railway IaC must connect the service to a GitHub source', failures);
-  requireContains(makefile, '--build-arg OPENCLAW_IMAGE="$(OPENCLAW_IMAGE)"', 'Makefile build target must pass the OpenClaw image build arg', failures);
-  requireContains(makefile, 'node bin/railclaw.js deploy', 'Makefile deploy target must use the Railclaw deploy helper', failures);
-  if (makefile.includes(`railclaw ${'railway'}`)) {
-    failures.push('Makefile must not expose Railway wrapper commands through railclaw');
-  }
+  requireContains(agents, 'skills/BOOTSTRAP.md', 'AGENTS.md must point bootstrap work to skills/BOOTSTRAP.md', failures);
+  requireContains(bootstrap, 'railway config apply', 'Bootstrap skill must document Railway IaC apply', failures);
+  requireContains(bootstrap, 'openclaw-volume', 'Bootstrap skill must document the Railway volume', failures);
+  requireContains(bootstrap, 'Dockerfile', 'Bootstrap skill must document Dockerfile-based service builds', failures);
+  requireContains(bootstrap, 'OPENCLAW_GATEWAY_PORT=8080', 'Bootstrap skill must document required Railway variables', failures);
+  requireContains(bootstrap, '/home/node/.openclaw -> /data/.openclaw', 'Bootstrap skill must document runtime path links', failures);
+  requireContains(bootstrap, 'Do not use `railway deploy`', 'Bootstrap skill must document the Railway deploy caveat', failures);
+  requireContains(dependabot, 'interval: weekly', 'Dependabot must keep the default weekly update cadence', failures);
+  requireContains(weeklyUpgrade, 'cron: "0 0 * * 1"', 'Weekly upgrade workflow must run on the default weekly schedule', failures);
 
   const tracked = await gitFiles(root);
   const trackedArtifact = tracked.find((file) => /(^|\/)(\.env|data|state|workspace|migration-out|.*\.tar(\.gz)?(\.enc)?)$/.test(file));

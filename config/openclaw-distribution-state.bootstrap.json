@@ -1,0 +1,13 @@
+{
+  "distributionVersion": "0.1.0",
+  "schemaVersion": 1,
+  "initialized": true,
+  "setupCompleted": true,
+  "updatedAt": "__UPDATED_AT__",
+  "paths": {
+    "stateDir": "/data/.openclaw",
+    "workspaceDir": "/data/workspace",
+    "distributionDir": "/data/.openclaw-distribution",
+    "configPath": "/data/.openclaw/openclaw.json"
+  }
+}

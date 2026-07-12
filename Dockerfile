@@ -44,6 +44,7 @@ COPY --chown=node:node package.json package-lock.json ./
 RUN npm ci --omit=dev \
   && npm cache clean --force
 COPY --chown=node:node bin /opt/railclaw/bin
+COPY --chown=node:node config /opt/railclaw/config
 COPY --chown=node:node src /opt/railclaw/src
 RUN chmod +x /opt/railclaw/bin/railclaw.js
 
