@@ -11,7 +11,9 @@ Official CLI docs: https://docs.railway.com/cli
 - Healthcheck: `/healthz`.
 - Public Networking HTTP Proxy port: `8080`.
 
-The included `railway.json` configures Dockerfile build and healthcheck. Volume attachment, volume resizing, domains, and secrets are configured through Railway.
+The included `railway.json` configures Dockerfile build and healthcheck for standard Railway deploys.
+The included `.railway/railway.ts` is the Railway Infrastructure as Code template for GitHub-source deployments; it creates the `openclaw` service, creates `openclaw-volume`, and mounts it at `/data`.
+Volume resizing and secrets are configured through Railway.
 
 ## Required Variables
 
@@ -61,6 +63,21 @@ Or call the helper directly:
 
 ```bash
 npm run railclaw -- deploy --create-domain
+```
+
+To link a Railway service to a GitHub repo instead of uploading local files:
+
+```bash
+npm run railclaw -- deploy --repo OWNER/REPO --branch main --create-domain
+```
+
+To use the Railway IaC template directly:
+
+```bash
+export RAILWAY_GITHUB_REPO='OWNER/REPO'
+export RAILWAY_GITHUB_BRANCH='main'
+railway config plan
+railway config apply
 ```
 
 Do not use `railway deploy` for this application; Railway documents that command for deploying pre-built templates. Railclaw deploys through `railway up`.

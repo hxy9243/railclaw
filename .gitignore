@@ -20,6 +20,8 @@ openclaw-migration-*.tar*
 
 # Railway and local tooling caches
 .railway/
+!.railway/
+!.railway/railway.ts
 .cache/
 .tmp/
 tmp/

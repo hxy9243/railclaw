@@ -32,6 +32,13 @@ export async function deploy(options = {}) {
     await ensureDomain(service, environment);
   }
 
+  if (options.repo) {
+    await ensureGithubSource({ service, environment, repo: options.repo, branch: options.branch || 'main' });
+    console.log(`linked ${service} to GitHub source ${options.repo}:${options.branch || 'main'}`);
+    console.log('Railway will deploy from the connected GitHub source.');
+    return;
+  }
+
   const args = ['up', '--service', service, '--environment', environment];
   if (options.detach) args.push('--detach');
   if (options.message) args.push('--message', options.message);
@@ -185,6 +192,23 @@ async function ensureDomain(service, environment) {
   }
   console.log('creating Railway service domain on port 8080');
   await runRailway(['domain', '--service', service, '--environment', environment, '--port', '8080', '--json']);
+}
+
+async function ensureGithubSource({ service, environment, repo, branch }) {
+  await runRailway([
+    'service',
+    'source',
+    'connect',
+    '--repo',
+    repo,
+    '--branch',
+    branch,
+    '--service',
+    service,
+    '--environment',
+    environment,
+    '--json',
+  ]);
 }
 
 function domainName(domain) {

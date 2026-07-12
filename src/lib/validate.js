@@ -6,6 +6,7 @@ import { repoRoot } from './paths.js';
 const REQUIRED_FILES = [
   'Dockerfile',
   'railway.json',
+  '.railway/railway.ts',
   '.env.example',
   'config/openclaw.example.json',
   'config/distribution.yaml',
@@ -42,6 +43,7 @@ export async function validateRepository({ root = repoRoot() } = {}) {
 
   const dockerfile = await read(root, 'Dockerfile');
   const railway = await read(root, 'railway.json');
+  const railwayTemplate = await read(root, '.railway/railway.ts');
   const makefile = await read(root, 'Makefile');
 
   requireContains(dockerfile, 'ARG OPENCLAW_IMAGE=alpine/openclaw:latest', 'Dockerfile must inherit the public OpenClaw image by default', failures);
@@ -56,6 +58,9 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
   requireContains(dockerfile, 'src/container/entrypoint.js', 'Dockerfile must use the Railclaw container entrypoint', failures);
   requireContains(railway, '"healthcheckPath": "/healthz"', 'Railway healthcheck must use /healthz', failures);
+  requireContains(railwayTemplate, 'volume("openclaw-volume"', 'Railway IaC must define the OpenClaw volume', failures);
+  requireContains(railwayTemplate, '"/data": data', 'Railway IaC must mount the volume at /data', failures);
+  requireContains(railwayTemplate, 'source: github(repo', 'Railway IaC must connect the service to a GitHub source', failures);
   requireContains(makefile, '--build-arg OPENCLAW_IMAGE="$(OPENCLAW_IMAGE)"', 'Makefile build target must pass the OpenClaw image build arg', failures);
   requireContains(makefile, 'node bin/railclaw.js deploy', 'Makefile deploy target must use the Railclaw deploy helper', failures);
   if (makefile.includes(`railclaw ${'railway'}`)) {

@@ -26,6 +26,8 @@ export async function run(argv = process.argv) {
     .option('--project-name <name>', 'project name to use when initializing an unlinked project', 'railclaw-openclaw')
     .option('--detach', 'start deploy and return without streaming logs')
     .option('--create-domain', 'create a Railway service domain when none exists')
+    .option('--repo <owner/repo>', 'connect the Railway service to a GitHub repo instead of uploading local files')
+    .option('--branch <branch>', 'GitHub branch to deploy when --repo is used', 'main')
     .option('--message <message>', 'deployment message')
     .action((options) => deploy(options));
 

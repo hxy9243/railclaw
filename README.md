@@ -26,6 +26,29 @@ openclaw-railway doctor
 8. Add the printed `OPENCLAW_GATEWAY_TOKEN` as a Railway variable, then redeploy or restart.
 9. Open the public Railway URL.
 
+### Railway Template
+
+This repo includes `.railway/railway.ts` for Railway Infrastructure as Code. It
+defines the `openclaw` service, connects it to a GitHub repo, configures the
+Dockerfile builder and `/healthz` healthcheck, and mounts `openclaw-volume` at
+`/data`.
+
+For a fork, set the repo before applying:
+
+```bash
+export RAILWAY_GITHUB_REPO='<owner>/<repo>'
+export RAILWAY_GITHUB_BRANCH='main'
+railway config plan
+railway config apply
+```
+
+Or use the CLI helper to create the service, variables, `/data` volume, optional
+domain, and GitHub source link:
+
+```bash
+npm run railclaw -- deploy --repo <owner>/<repo> --branch main --create-domain
+```
+
 ## Dependabot Auto-Merge
 
 This repo includes `.github/workflows/dependabot-automerge.yml`. It only runs for
