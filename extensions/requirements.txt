@@ -1,0 +1,2 @@
+# Standard Python dependency manifest for Dependabot.
+# Keep this synchronized with extensions/pip.txt until a generator owns both.

@@ -15,10 +15,12 @@ const REQUIRED_FILES = [
   'extensions/apt.txt',
   'extensions/npm.txt',
   'extensions/pip.txt',
+  'extensions/requirements.txt',
   'deploy/install-extensions.sh',
   '.github/dependabot.yml',
   '.github/workflows/validate.yml',
   '.github/workflows/build.yml',
+  '.github/workflows/smoke-test.yml',
   '.github/workflows/weekly-upgrade.yml',
   'bin/railclaw.js',
   'src/cli/index.js',
@@ -49,6 +51,8 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'COPY extensions /tmp/openclaw-extensions', 'Dockerfile must copy extension manifests into the build', failures);
   requireContains(dockerfile, 'install-openclaw-extensions', 'Dockerfile must install packages through the extension installer', failures);
   requireContains(officialDockerfile, 'FROM ${OPENCLAW_IMAGE}', 'official-image variant must inherit the configured official OpenClaw image', failures);
+  requireContains(officialDockerfile, 'COPY extensions /tmp/openclaw-extensions', 'official-image variant must copy extension manifests into the build', failures);
+  requireContains(officialDockerfile, 'install-openclaw-extensions', 'official-image variant must install packages through the extension installer', failures);
   requireContains(dockerfile, 'OPENCLAW_CONFIG_DIR=/data/.openclaw', 'Dockerfile must pin config to /data', failures);
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
   requireContains(dockerfile, 'src/container/entrypoint.js', 'Dockerfile must use the Railclaw container entrypoint', failures);

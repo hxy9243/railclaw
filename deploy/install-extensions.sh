@@ -25,6 +25,7 @@ join_lines_and_words() {
 apt_packages="$(read_manifest "$EXTENSION_DIR/apt.txt" | join_lines_and_words) ${EXTRA_APT_PACKAGES}"
 npm_packages="${OPENCLAW_NPM_PACKAGE} $(read_manifest "$EXTENSION_DIR/npm.txt" | join_lines_and_words) ${EXTRA_NPM_PACKAGES}"
 pip_packages="$(read_manifest "$EXTENSION_DIR/pip.txt" | join_lines_and_words) ${EXTRA_PIP_PACKAGES}"
+pip_requirements="$EXTENSION_DIR/requirements.txt"
 
 if [ -n "$(echo "$apt_packages" | xargs)" ]; then
   apt-get update
@@ -35,6 +36,10 @@ fi
 if [ -n "$(echo "$npm_packages" | xargs)" ]; then
   npm install -g $npm_packages
   npm cache clean --force
+fi
+
+if [ -f "$pip_requirements" ]; then
+  python3 -m pip install --break-system-packages -r "$pip_requirements"
 fi
 
 if [ -n "$(echo "$pip_packages" | xargs)" ]; then
@@ -78,6 +83,7 @@ const manifest = {
     apt: lines(`${dir}/apt.txt`),
     npm: lines(`${dir}/npm.txt`),
     pip: lines(`${dir}/pip.txt`),
+    pythonRequirements: lines(`${dir}/requirements.txt`),
   },
   extra: {
     apt: process.env.EXTRA_APT_PACKAGES || '',

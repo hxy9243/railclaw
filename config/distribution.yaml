@@ -14,5 +14,6 @@ extensions:
   apt: extensions/apt.txt
   npm: extensions/npm.txt
   pip: extensions/pip.txt
+  pythonRequirements: extensions/requirements.txt
   browsers: extensions/browsers.yaml
   skills: extensions/skills.yaml

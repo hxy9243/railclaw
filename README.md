@@ -9,6 +9,7 @@ Deploy a customizable OpenClaw distribution to Railway from a forked Git reposit
    - `extensions/apt.txt`
    - `extensions/npm.txt`
    - `extensions/pip.txt`
+   - `extensions/requirements.txt`
    - `extensions/browsers.yaml`
    - `extensions/skills.yaml`
 3. Create a Railway project from the fork.
@@ -57,6 +58,7 @@ Edit extension manifests before deploying:
 extensions/apt.txt      Debian packages
 extensions/npm.txt      Global npm tools
 extensions/pip.txt      Python packages
+extensions/requirements.txt Standard Python manifest for Dependabot
 extensions/browsers.yaml Browser intent
 extensions/skills.yaml  Future skill/plugin manifest
 ```

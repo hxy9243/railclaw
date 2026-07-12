@@ -23,6 +23,17 @@ updates:
         patterns:
           - "*"
 
+  - package-ecosystem: pip
+    directory: /extensions
+    schedule:
+      interval: weekly
+      day: monday
+      time: "00:00"
+    groups:
+      python-runtime:
+        patterns:
+          - "*"
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

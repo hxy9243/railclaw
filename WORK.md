@@ -8,6 +8,7 @@ Implemented the MVP repository pivot from a deploy helper toward a reproducible 
   - `extensions/apt.txt`
   - `extensions/npm.txt`
   - `extensions/pip.txt`
+  - `extensions/requirements.txt`
   - `extensions/browsers.yaml`
   - `extensions/skills.yaml`
   - `deploy/install-extensions.sh`
@@ -18,6 +19,7 @@ Implemented the MVP repository pivot from a deploy helper toward a reproducible 
 - Added `setup` and `status` commands for terminal-based initialization.
 - Updated `doctor` to include persistent setup status.
 - Added Dependabot and GitHub Actions workflows for validation, Docker builds, and weekly upgrade checks.
+- Added a smoke-test workflow for the terminal setup path.
 - Simplified `README.md` around the fork/customize/deploy/setup user journey.
 - Added `config/distribution.yaml`, `tools/README.md`, and `AGENTS.md`.
 

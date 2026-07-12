@@ -8,29 +8,25 @@ FROM ${OPENCLAW_IMAGE}
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG EXTRA_APT_PACKAGES="bash ca-certificates coreutils curl dumb-init findutils git git-lfs gnupg jq less nano openssh-client procps python3 python3-pip python3-venv ripgrep rsync sqlite3 tar tini unzip vim wget xz-utils zip"
-ARG EXTRA_NPM_PACKAGES="@openai/codex @anthropic-ai/claude-code @google/gemini-cli obsidian-cli playwright"
+ARG OPENCLAW_NPM_PACKAGE=""
+ARG EXTRA_APT_PACKAGES=""
+ARG EXTRA_NPM_PACKAGES=""
 ARG EXTRA_PIP_PACKAGES=""
 ARG INSTALL_PLAYWRIGHT_BROWSERS=1
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends ${EXTRA_APT_PACKAGES} \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN npm install -g ${EXTRA_NPM_PACKAGES} \
-  && npm cache clean --force
-
-RUN if [ -n "${EXTRA_PIP_PACKAGES}" ]; then \
-    python3 -m pip install --break-system-packages ${EXTRA_PIP_PACKAGES}; \
-  fi
-
-RUN if [ "${INSTALL_PLAYWRIGHT_BROWSERS}" = "1" ]; then \
-    npx playwright install --with-deps chromium; \
-  fi
+COPY extensions /tmp/openclaw-extensions
+COPY deploy/install-extensions.sh /usr/local/bin/install-openclaw-extensions
+RUN chmod +x /usr/local/bin/install-openclaw-extensions \
+  && OPENCLAW_NPM_PACKAGE="${OPENCLAW_NPM_PACKAGE}" \
+    EXTRA_APT_PACKAGES="${EXTRA_APT_PACKAGES}" \
+    EXTRA_NPM_PACKAGES="${EXTRA_NPM_PACKAGES}" \
+    EXTRA_PIP_PACKAGES="${EXTRA_PIP_PACKAGES}" \
+    INSTALL_PLAYWRIGHT_BROWSERS="${INSTALL_PLAYWRIGHT_BROWSERS}" \
+    install-openclaw-extensions
 
 RUN mkdir -p /data/.openclaw /data/workspace /data/.config/openclaw \
   /home/node/.config \
-  && chown -R node:node /data /home/node
+  && chown -R node:node /data /home/node /opt/openclaw-manifests
 
 WORKDIR /opt/railclaw
 COPY --chown=node:node package.json package-lock.json ./

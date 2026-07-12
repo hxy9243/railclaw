@@ -1,0 +1,25 @@
+name: Smoke Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  setup-command:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Exercise terminal setup flow
+        run: |
+          tmp="$(mktemp -d)"
+          node bin/railclaw.js setup --data-dir "$tmp" --domain https://example.up.railway.app --generate-token
+          node bin/railclaw.js status --data-dir "$tmp" --json
+          test -f "$tmp/.openclaw/openclaw.json"
+          test -f "$tmp/.openclaw-distribution/state.json"
