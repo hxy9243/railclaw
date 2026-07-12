@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import { ensureContainerLayout } from '../lib/container-layout.js';
 import { initConfig, repairConfigForContainer } from '../lib/config.js';
+import { bootstrapDistribution } from '../lib/distribution.js';
 
 const nodeUid = 1000;
 const nodeGid = 1000;
@@ -15,6 +16,8 @@ await ensureContainerLayout({
   home: process.env.HOME || '/home/node',
   data: '/data',
 });
+
+await bootstrapDistribution({ dataDir: '/data' });
 
 try {
   await fs.access('/data/.openclaw/openclaw.json');

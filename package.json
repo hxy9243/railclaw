@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "bin": {
-    "railclaw": "bin/railclaw.js"
+    "railclaw": "bin/railclaw.js",
+    "openclaw-railway": "bin/railclaw.js"
   },
   "scripts": {
     "check": "node bin/railclaw.js validate",

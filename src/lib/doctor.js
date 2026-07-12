@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises';
 import { execa } from 'execa';
+import { distributionStatus } from './distribution.js';
 
-export async function doctor({ url } = {}) {
+export async function doctor({ url, dataDir = '/data' } = {}) {
   const checks = [];
   checks.push(await commandCheck('node', ['--version'], 'Node.js'));
   checks.push(await commandCheck('npm', ['--version'], 'npm'));
@@ -21,6 +22,9 @@ export async function doctor({ url } = {}) {
   } else {
     console.log('info: pass --url to verify /healthz and /readyz on a running instance');
   }
+
+  const status = await distributionStatus({ dataDir });
+  console.log(`info: setup initialized=${status.initialized} completed=${status.setupCompleted} config=${status.configExists}`);
 
   const failed = checks.filter((check) => !check.ok && check.required);
   if (failed.length > 0) throw new Error(`doctor found missing required tools: ${failed.map((c) => c.label).join(', ')}`);

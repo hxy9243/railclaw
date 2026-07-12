@@ -8,6 +8,7 @@ import { smoke } from '../lib/smoke.js';
 import { validateRepository } from '../lib/validate.js';
 import { doctor } from '../lib/doctor.js';
 import { deploy } from '../lib/deploy.js';
+import { completeSetup, distributionStatus } from '../lib/distribution.js';
 
 export async function run(argv = process.argv) {
   const program = new Command();
@@ -52,6 +53,46 @@ export async function run(argv = process.argv) {
     .description('Check local tooling and optionally a live Railclaw/OpenClaw endpoint')
     .option('--url <url>', 'base URL to smoke-test')
     .action((options) => doctor(options));
+
+  program
+    .command('setup')
+    .description('Initialize persistent /data state and mark terminal setup complete')
+    .option('--data-dir <dir>', 'target data directory', '/data')
+    .option('--domain <url>', 'Railway or custom domain allowed origin')
+    .option('--gateway-token <token>', 'gateway token already configured in Railway variables')
+    .option('--generate-token', 'generate and print a gateway token for Railway')
+    .action(async (options) => {
+      const result = await completeSetup({
+        dataDir: options.dataDir,
+        domain: options.domain,
+        token: options.gatewayToken,
+        generateGatewayToken: options.generateToken,
+      });
+      console.log(`initialized OpenClaw state: ${result.configPath}`);
+      console.log(`updated distribution state: ${result.statePath}`);
+      if (result.gatewayToken) {
+        console.log(`OPENCLAW_GATEWAY_TOKEN=${result.gatewayToken}`);
+      }
+      console.log('run doctor next: openclaw-railway doctor');
+    });
+
+  program
+    .command('status')
+    .description('Print persistent distribution setup status')
+    .option('--data-dir <dir>', 'target data directory', '/data')
+    .option('--json', 'print JSON')
+    .action(async (options) => {
+      const status = await distributionStatus({ dataDir: options.dataDir });
+      if (options.json) {
+        console.log(JSON.stringify(status, null, 2));
+        return;
+      }
+      console.log(`data: ${status.dataDir}`);
+      console.log(`initialized: ${status.initialized}`);
+      console.log(`setup completed: ${status.setupCompleted}`);
+      console.log(`config exists: ${status.configExists}`);
+      console.log(`workspace exists: ${status.workspaceExists}`);
+    });
 
   const config = program.command('config').description('Manage basic OpenClaw config');
   config
