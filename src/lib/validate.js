@@ -11,6 +11,10 @@ const REQUIRED_FILES = [
   'config/openclaw.example.json',
   'package.json',
   'package-lock.json',
+  'extensions/apt.txt',
+  'extensions/npm.txt',
+  'extensions/pip.txt',
+  'deploy/install-extensions.sh',
   'bin/railclaw.js',
   'src/cli/index.js',
   'src/container/entrypoint.js',
@@ -35,6 +39,8 @@ export async function validateRepository({ root = repoRoot() } = {}) {
 
   requireContains(dockerfile, 'FROM node:24-bookworm-slim', 'Dockerfile must use the npm-install Node base', failures);
   requireContains(dockerfile, 'OPENCLAW_NPM_PACKAGE=openclaw@', 'Dockerfile must pin an OpenClaw npm package by default', failures);
+  requireContains(dockerfile, 'COPY extensions /tmp/openclaw-extensions', 'Dockerfile must copy extension manifests into the build', failures);
+  requireContains(dockerfile, 'install-openclaw-extensions', 'Dockerfile must install packages through the extension installer', failures);
   requireContains(officialDockerfile, 'FROM ${OPENCLAW_IMAGE}', 'official-image variant must inherit the configured official OpenClaw image', failures);
   requireContains(dockerfile, 'OPENCLAW_CONFIG_DIR=/data/.openclaw', 'Dockerfile must pin config to /data', failures);
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);

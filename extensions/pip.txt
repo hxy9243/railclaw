@@ -1,0 +1,3 @@
+# Python tools installed into the image at build time.
+# Example:
+# obsidian-headless==1.2.3

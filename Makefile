@@ -2,8 +2,8 @@
 
 IMAGE_NAME ?= railclaw-openclaw
 OPENCLAW_NPM_PACKAGE ?= openclaw@2026.6.10
-EXTRA_APT_PACKAGES ?= bash ca-certificates coreutils curl dumb-init findutils git git-lfs gnupg jq less nano openssh-client procps python3 python3-pip python3-venv ripgrep rsync sqlite3 tar tini unzip vim wget xz-utils zip
-EXTRA_NPM_PACKAGES ?= @openai/codex @anthropic-ai/claude-code @google/gemini-cli obsidian-cli playwright
+EXTRA_APT_PACKAGES ?=
+EXTRA_NPM_PACKAGES ?=
 EXTRA_PIP_PACKAGES ?=
 INSTALL_PLAYWRIGHT_BROWSERS ?= 1
 

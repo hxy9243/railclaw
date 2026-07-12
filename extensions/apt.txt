@@ -1,0 +1,29 @@
+# Keep production builds reproducible by pinning packages when the distro
+# repository makes that practical. Blank lines and comments are ignored.
+bash
+ca-certificates
+coreutils
+curl
+dumb-init
+findutils
+git
+git-lfs
+gnupg
+jq
+less
+nano
+openssh-client
+procps
+python3
+python3-pip
+python3-venv
+ripgrep
+rsync
+sqlite3
+tar
+tini
+unzip
+vim
+wget
+xz-utils
+zip
