@@ -3,13 +3,14 @@ import { execa } from 'execa';
 import { distributionStatus } from './distribution.js';
 
 export async function doctor({ url, dataDir = '/data' } = {}) {
+  const isContainer = Boolean(process.env.OPENCLAW_STATE_DIR);
   const checks = [];
   checks.push(await commandCheck('node', ['--version'], 'Node.js'));
   checks.push(await commandCheck('npm', ['--version'], 'npm'));
   checks.push(await commandCheck('docker', ['--version'], 'Docker'));
   checks.push(await commandCheck('railway', ['--version'], 'Railway CLI'));
-  checks.push(await pathCheck('Dockerfile'));
-  checks.push(await pathCheck('railway.json'));
+  checks.push(await pathCheck('Dockerfile', !isContainer));
+  checks.push(await pathCheck('railway.json', !isContainer));
   checks.push(await pathCheck('package.json'));
 
   for (const check of checks) {
@@ -39,11 +40,11 @@ async function commandCheck(command, args, label) {
   }
 }
 
-async function pathCheck(file) {
+async function pathCheck(file, required = true) {
   try {
     await fs.access(file);
-    return { ok: true, label: file };
+    return { ok: true, label: file, required };
   } catch {
-    return { ok: false, label: file, detail: 'missing', required: true };
+    return { ok: false, label: file, detail: 'missing', required };
   }
 }
