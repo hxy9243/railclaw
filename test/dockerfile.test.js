@@ -14,11 +14,16 @@ test('Dockerfile builds app as node and starts root bootstrap for Railway volume
   assert.doesNotMatch(dockerfile, /chown -R node:node \/data/, 'runtime entrypoint should own mounted /data');
 });
 
-test('Dockerfile installs the latest OpenClaw package on Ubuntu', async () => {
+test('Dockerfile installs a pinned OpenClaw package on Ubuntu', async () => {
   const dockerfile = await fs.readFile(new URL('../Dockerfile', import.meta.url), 'utf8');
+  const compose = await fs.readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8');
+  const dockerVersion = dockerfile.match(/^ARG OPENCLAW_VERSION=(.+)$/m)?.[1];
+  const composeVersion = compose.match(/OPENCLAW_VERSION: \$\{OPENCLAW_VERSION:-([^}]+)\}/)?.[1];
 
   assert.match(dockerfile, /FROM ubuntu:\$\{UBUNTU_VERSION\}/);
-  assert.match(dockerfile, /ARG OPENCLAW_VERSION=latest/);
+  assert.match(dockerfile, /ARG OPENCLAW_VERSION=\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?/);
+  assert.doesNotMatch(dockerfile, /ARG OPENCLAW_VERSION=latest/);
+  assert.equal(composeVersion, dockerVersion, 'Docker and Compose OpenClaw pins should match');
   assert.match(dockerfile, /npm install -g "openclaw@\$\{OPENCLAW_VERSION\}"/);
   assert.doesNotMatch(dockerfile, /alpine\/openclaw/);
 });

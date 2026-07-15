@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 #
 # Railway deploy image for OpenClaw. Build on Ubuntu and install OpenClaw from
-# npm so every clean build resolves the current release tagged "latest".
+# npm at a reproducible version. The weekly upgrade workflow keeps this pin current.
 ARG UBUNTU_VERSION=24.04
 FROM ubuntu:${UBUNTU_VERSION}
 
@@ -9,7 +9,7 @@ USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NODE_MAJOR=24
-ARG OPENCLAW_VERSION=latest
+ARG OPENCLAW_VERSION=2026.7.1
 ARG OPENCLAW_INSTALL_BROWSER=1
 ARG EXTRA_NPM_PACKAGES=""
 ARG EXTRA_APT_PACKAGES=""
@@ -17,7 +17,7 @@ ARG EXTRA_PIP_PACKAGES=""
 ARG INSTALL_PLAYWRIGHT_BROWSERS=""
 
 # Ubuntu's Node.js package is too old for OpenClaw. Install the current Node 24
-# release from NodeSource, then install OpenClaw through npm's latest dist-tag.
+# release from NodeSource, then install the pinned OpenClaw release from npm.
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
   && mkdir -p /etc/apt/keyrings \

@@ -9,7 +9,8 @@ jobs:
   check:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -18,7 +19,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Check OpenClaw package
-        run: node tools/upgrades/check-openclaw-package.js
+        run: node tools/upgrades/check-openclaw-package.js --write
       - name: Report npm updates
         run: |
           npm outdated || true
@@ -34,3 +35,17 @@ jobs:
         run: |
           docker run --rm --entrypoint node openclaw-railway:weekly-upgrade-check \
             -e "const m=require('/opt/openclaw-manifests/build-manifest.json'); if (!m.versions.openclaw) process.exit(1); console.log(m.versions)"
+      - name: Create OpenClaw update pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          add-paths: |
+            Dockerfile
+            docker-compose.yml
+          branch: automated/openclaw-version
+          delete-branch: true
+          commit-message: "chore: update OpenClaw version"
+          title: "chore: update OpenClaw version"
+          body: |
+            Updates the pinned OpenClaw npm version to the latest published release.
+
+            The workflow built the image and checked its runtime manifest before opening this PR.

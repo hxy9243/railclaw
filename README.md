@@ -49,7 +49,7 @@ The default OpenClaw config templates live in `config/`. Bootstrap copies those 
 
 ## 🔄 Updates
 
-Dependabot keeps the Ubuntu base, dependencies, and GitHub Actions current. OpenClaw is installed as `openclaw@latest`, and the weekly upgrade build verifies the package currently published to npm.
+Dependabot keeps the Ubuntu base, dependencies, and GitHub Actions current. Because Dependabot does not track npm versions in Dockerfile build arguments, OpenClaw is pinned explicitly and the weekly upgrade workflow updates the pin, verifies the image, and opens a pull request when npm publishes a new release.
 
 Optional auto-merge setup is documented in [skills/BOOTSTRAP.md](skills/BOOTSTRAP.md). Required checks should still gate merges on `main`.
 

@@ -62,7 +62,7 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   const lockExtensions = await read(root, '.github/workflows/lock-extensions.yml');
 
   requireContains(dockerfile, 'FROM ubuntu:${UBUNTU_VERSION}', 'Dockerfile must use the configured Ubuntu base image', failures);
-  requireContains(dockerfile, 'ARG OPENCLAW_VERSION=latest', 'Dockerfile must default to the latest OpenClaw package', failures);
+  requireMatch(dockerfile, /^ARG OPENCLAW_VERSION=\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/m, 'Dockerfile must pin an explicit OpenClaw package version', failures);
   requireContains(dockerfile, 'openclaw@${OPENCLAW_VERSION}', 'Dockerfile must install OpenClaw from npm', failures);
   requireContains(dockerfile, 'OPENCLAW_INSTALL_BROWSER', 'Dockerfile must expose the official browser install build arg', failures);
   requireContains(dockerfile, 'COPY extensions /tmp/openclaw-extensions', 'Dockerfile must copy extension manifests into the build', failures);
@@ -89,6 +89,8 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dependabot, 'directory: /extensions', 'Dependabot must update locked npm extensions', failures);
   requireContains(lockExtensions, 'npm run lock:extensions', 'Extension workflow must regenerate dependency locks', failures);
   requireContains(weeklyUpgrade, 'cron: "0 0 * * 1"', 'Weekly upgrade workflow must run on the default weekly schedule', failures);
+  requireContains(weeklyUpgrade, 'check-openclaw-package.js --write', 'Weekly upgrade workflow must update the OpenClaw pin', failures);
+  requireContains(weeklyUpgrade, 'peter-evans/create-pull-request@v8', 'Weekly upgrade workflow must create an OpenClaw update pull request', failures);
 
   const tracked = await gitFiles(root);
   const trackedArtifact = tracked.find((file) => /(^|\/)(\.env|data|state|workspace|migration-out|.*\.tar(\.gz)?(\.enc)?)$/.test(file));
@@ -155,6 +157,10 @@ async function exists(file) {
 
 function requireContains(text, needle, message, failures) {
   if (!text.includes(needle)) failures.push(message);
+}
+
+function requireMatch(text, pattern, message, failures) {
+  if (!pattern.test(text)) failures.push(message);
 }
 
 function escapeRegExp(value) {
