@@ -26,18 +26,30 @@ Edit the extension manifests before deploying or before opening an update PR:
 
 ```text
 extensions/apt.txt
-extensions/npm.txt
-extensions/pip.txt
+extensions/package.json
+extensions/package-lock.json
+extensions/requirements.in
 extensions/requirements.txt
 extensions/browsers.yaml
 extensions/skills.yaml
 ```
 
+Add npm tools with `npm install --save-exact --prefix extensions PACKAGE`.
+Add exact Python requirements to `extensions/requirements.in`, then run
+`python3 -m pip install pip-tools` followed by `npm run lock:extensions`. Commit
+both the declarations and generated lockfiles.
+The lockfile workflow performs the same update automatically on repository
+branches, while CI rejects pull requests whose locks are stale. The
+`EXTRA_NPM_PACKAGES` and `EXTRA_PIP_PACKAGES` build arguments are unlocked
+development escape hatches and should not be used for production extensions.
+Version ranges such as `^1.2.3` are rejected by repository validation so every
+direct npm extension remains reviewable and reproducible.
+
 The default OpenClaw config templates live in `config/`. Bootstrap copies those templates into the Railway volume instead of storing mutable runtime state in the image.
 
 ## 🔄 Updates
 
-Dependabot and the weekly upgrade workflow keep dependencies, GitHub Actions, and the OpenClaw base image moving through pull requests.
+Dependabot keeps the Ubuntu base, dependencies, and GitHub Actions current. OpenClaw is installed as `openclaw@latest`, and the weekly upgrade build verifies the package currently published to npm.
 
 Optional auto-merge setup is documented in [skills/BOOTSTRAP.md](skills/BOOTSTRAP.md). Required checks should still gate merges on `main`.
 

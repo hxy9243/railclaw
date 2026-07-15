@@ -21,4 +21,4 @@ jobs:
       - name: Inspect build manifest
         run: |
           docker run --rm --entrypoint node openclaw-railway:${{ github.sha }} \
-            -e "const m=require('/opt/openclaw-manifests/build-manifest.json'); if (!m.openclawImage) process.exit(1); console.log(m)"
+            -e "const m=require('/opt/openclaw-manifests/build-manifest.json'); if (!m.openclawPackage || !m.versions.openclaw) process.exit(1); console.log(m)"

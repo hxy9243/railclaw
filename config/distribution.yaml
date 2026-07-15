@@ -1,5 +1,5 @@
 openclaw:
-  image: alpine/openclaw:latest
+  package: openclaw@latest
 
 profile: developer
 
@@ -12,8 +12,9 @@ runtime:
 
 extensions:
   apt: extensions/apt.txt
-  npm: extensions/npm.txt
-  pip: extensions/pip.txt
+  npmPackage: extensions/package.json
+  npmLock: extensions/package-lock.json
+  pythonInput: extensions/requirements.in
   pythonRequirements: extensions/requirements.txt
   browsers: extensions/browsers.yaml
   skills: extensions/skills.yaml

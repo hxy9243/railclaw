@@ -1,0 +1,4 @@
+# Add direct Python dependencies here with exact versions, for example:
+# obsidian-headless==1.2.3
+#
+# Run `npm run lock:extensions` to compile requirements.txt.

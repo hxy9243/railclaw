@@ -15,6 +15,15 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
       - run: npm ci
+      - name: Verify extension locks
+        run: |
+          python -m pip install pip-tools
+          npm run lock:extensions
+          git diff --exit-code -- extensions/package-lock.json extensions/requirements.txt
       - run: npm test
       - run: npm run check

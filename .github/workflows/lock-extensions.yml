@@ -1,0 +1,45 @@
+name: Lock Extensions
+
+on:
+  push:
+    branches-ignore:
+      - main
+    paths:
+      - extensions/package.json
+      - extensions/requirements.in
+      - tools/extensions/lock.sh
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: extensions/package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install lock tooling
+        run: python -m pip install pip-tools
+      - name: Update extension locks
+        run: npm run lock:extensions
+      - name: Commit generated locks
+        run: |
+          if git diff --quiet -- extensions/package-lock.json extensions/requirements.txt; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add extensions/package-lock.json extensions/requirements.txt
+          git commit -m "chore: lock extension dependencies"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

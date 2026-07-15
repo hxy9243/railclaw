@@ -17,10 +17,12 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Check OpenClaw image
-        run: node tools/upgrades/check-openclaw-image.js
+      - name: Check OpenClaw package
+        run: node tools/upgrades/check-openclaw-package.js
       - name: Report npm updates
-        run: npm outdated || true
+        run: |
+          npm outdated || true
+          npm outdated --prefix extensions || true
       - name: Build minimal image
         run: |
           docker build \

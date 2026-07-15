@@ -9,6 +9,7 @@
   },
   "scripts": {
     "check": "node bin/railclaw.js validate",
+    "lock:extensions": "bash tools/extensions/lock.sh",
     "railclaw": "node bin/railclaw.js",
     "test": "node --test"
   },

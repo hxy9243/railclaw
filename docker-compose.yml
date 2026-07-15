@@ -3,9 +3,7 @@ services:
     build:
       context: .
       args:
-        OPENCLAW_IMAGE: ${OPENCLAW_IMAGE:-alpine/openclaw:latest}
-        OPENCLAW_IMAGE_APT_PACKAGES: ${OPENCLAW_IMAGE_APT_PACKAGES:-}
-        OPENCLAW_IMAGE_PIP_PACKAGES: ${OPENCLAW_IMAGE_PIP_PACKAGES:-}
+        OPENCLAW_VERSION: ${OPENCLAW_VERSION:-latest}
         OPENCLAW_INSTALL_BROWSER: ${OPENCLAW_INSTALL_BROWSER:-1}
         EXTRA_APT_PACKAGES: ${EXTRA_APT_PACKAGES:-}
         EXTRA_NPM_PACKAGES: ${EXTRA_NPM_PACKAGES:-@openai/codex @anthropic-ai/claude-code @google/gemini-cli obsidian-cli playwright}

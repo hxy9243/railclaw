@@ -2,12 +2,11 @@
 set -euo pipefail
 
 EXTENSION_DIR="${EXTENSION_DIR:-/tmp/openclaw-extensions}"
+NPM_GLOBAL_PREFIX="${NPM_GLOBAL_PREFIX:-/opt/openclaw-extensions}"
+NPM_EXTENSION_DIR="$NPM_GLOBAL_PREFIX/lib"
 MANIFEST_DIR="${MANIFEST_DIR:-/opt/openclaw-manifests}"
 BUILD_MANIFEST="${BUILD_MANIFEST:-/opt/openclaw-manifests/build-manifest.json}"
-OPENCLAW_IMAGE="${OPENCLAW_IMAGE:-alpine/openclaw:latest}"
-OPENCLAW_IMAGE_APT_PACKAGES="${OPENCLAW_IMAGE_APT_PACKAGES:-}"
-OPENCLAW_DOCKER_APT_PACKAGES="${OPENCLAW_DOCKER_APT_PACKAGES:-}"
-OPENCLAW_IMAGE_PIP_PACKAGES="${OPENCLAW_IMAGE_PIP_PACKAGES:-}"
+OPENCLAW_VERSION="${OPENCLAW_VERSION:-latest}"
 OPENCLAW_INSTALL_BROWSER="${OPENCLAW_INSTALL_BROWSER:-1}"
 EXTRA_APT_PACKAGES="${EXTRA_APT_PACKAGES:-}"
 EXTRA_NPM_PACKAGES="${EXTRA_NPM_PACKAGES:-}"
@@ -33,10 +32,7 @@ is_truthy() {
   esac
 }
 
-official_apt_packages="${OPENCLAW_IMAGE_APT_PACKAGES:-$OPENCLAW_DOCKER_APT_PACKAGES}"
-apt_packages="$(read_manifest "$EXTENSION_DIR/apt.txt" | join_lines_and_words) ${official_apt_packages} ${EXTRA_APT_PACKAGES}"
-npm_packages="$(read_manifest "$EXTENSION_DIR/npm.txt" | join_lines_and_words) ${EXTRA_NPM_PACKAGES}"
-pip_packages="$(read_manifest "$EXTENSION_DIR/pip.txt" | join_lines_and_words) ${OPENCLAW_IMAGE_PIP_PACKAGES} ${EXTRA_PIP_PACKAGES}"
+apt_packages="$(read_manifest "$EXTENSION_DIR/apt.txt" | join_lines_and_words) ${EXTRA_APT_PACKAGES}"
 pip_requirements="$EXTENSION_DIR/requirements.txt"
 
 if [ -n "$(echo "$apt_packages" | xargs)" ]; then
@@ -45,8 +41,21 @@ if [ -n "$(echo "$apt_packages" | xargs)" ]; then
   rm -rf /var/lib/apt/lists/*
 fi
 
-if [ -n "$(echo "$npm_packages" | xargs)" ]; then
-  npm install -g $npm_packages
+if [ -f "$EXTENSION_DIR/package.json" ]; then
+  mkdir -p "$NPM_EXTENSION_DIR" "$NPM_GLOBAL_PREFIX/bin"
+  cp "$EXTENSION_DIR/package.json" "$EXTENSION_DIR/package-lock.json" "$NPM_EXTENSION_DIR/"
+  npm ci --omit=dev --prefix "$NPM_EXTENSION_DIR"
+  for executable in "$NPM_EXTENSION_DIR/node_modules/.bin/"*; do
+    [ -e "$executable" ] || continue
+    ln -sf "$(readlink -f "$executable")" "$NPM_GLOBAL_PREFIX/bin/$(basename "$executable")"
+  done
+  npm cache clean --force
+fi
+
+# Build args remain available as a deliberately unlocked development escape
+# hatch. Production extensions belong in the locked manifests above.
+if [ -n "$(echo "$EXTRA_NPM_PACKAGES" | xargs)" ]; then
+  npm install -g $EXTRA_NPM_PACKAGES
   npm cache clean --force
 fi
 
@@ -54,18 +63,19 @@ if [ -f "$pip_requirements" ]; then
   python3 -m pip install --break-system-packages -r "$pip_requirements"
 fi
 
-if [ -n "$(echo "$pip_packages" | xargs)" ]; then
-  python3 -m pip install --break-system-packages $pip_packages
+if [ -n "$(echo "$EXTRA_PIP_PACKAGES" | xargs)" ]; then
+  python3 -m pip install --break-system-packages $EXTRA_PIP_PACKAGES
 fi
 
 if is_truthy "$INSTALL_PLAYWRIGHT_BROWSERS"; then
   apt-get update
   apt-get install -y --no-install-recommends xvfb
   rm -rf /var/lib/apt/lists/*
-  if [ -f /app/node_modules/playwright-core/cli.js ]; then
-    node /app/node_modules/playwright-core/cli.js install --with-deps chromium
+  if [ -f "$NPM_EXTENSION_DIR/node_modules/playwright/cli.js" ]; then
+    node "$NPM_EXTENSION_DIR/node_modules/playwright/cli.js" install --with-deps chromium
   else
-    npx playwright install --with-deps chromium
+    echo "playwright must be present in extensions/package.json" >&2
+    exit 1
   fi
 fi
 
@@ -93,21 +103,29 @@ function version(command, args) {
   }
 }
 
+function npmDependencies(file) {
+  try {
+    const json = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return Object.entries(json.dependencies || {}).map(([name, spec]) => `${name}@${spec}`);
+  } catch {
+    return [];
+  }
+}
+
 const dir = process.env.EXTENSION_DIR || '/tmp/openclaw-extensions';
 const manifest = {
   generatedAt: new Date().toISOString(),
-  openclawImage: process.env.OPENCLAW_IMAGE || 'alpine/openclaw:latest',
+  openclawPackage: `openclaw@${process.env.OPENCLAW_VERSION || 'latest'}`,
   installPlaywrightBrowsers: process.env.INSTALL_PLAYWRIGHT_BROWSERS || process.env.OPENCLAW_INSTALL_BROWSER || '1',
   manifests: {
     apt: lines(`${dir}/apt.txt`),
-    npm: lines(`${dir}/npm.txt`),
-    pip: lines(`${dir}/pip.txt`),
+    npm: npmDependencies(`${dir}/package.json`),
     pythonRequirements: lines(`${dir}/requirements.txt`),
   },
   extra: {
-    apt: [process.env.OPENCLAW_IMAGE_APT_PACKAGES || process.env.OPENCLAW_DOCKER_APT_PACKAGES || '', process.env.EXTRA_APT_PACKAGES || ''].filter(Boolean).join(' '),
+    apt: process.env.EXTRA_APT_PACKAGES || '',
     npm: process.env.EXTRA_NPM_PACKAGES || '',
-    pip: [process.env.OPENCLAW_IMAGE_PIP_PACKAGES || '', process.env.EXTRA_PIP_PACKAGES || ''].filter(Boolean).join(' '),
+    pip: process.env.EXTRA_PIP_PACKAGES || '',
   },
   versions: {
     node: version('node', ['--version']),
