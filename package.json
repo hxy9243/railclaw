@@ -21,6 +21,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "railway": "^3.5.5"
+    "railway": "^3.5.7"
   }
 }
