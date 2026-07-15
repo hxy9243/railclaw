@@ -1,29 +1,42 @@
 # syntax=docker/dockerfile:1.7
 #
-# Railway deploy image for OpenClaw. Inherit the official runtime image and add
-# this repository's Railway setup layer plus manifest-driven extensions.
-ARG OPENCLAW_IMAGE=alpine/openclaw:latest
-FROM ${OPENCLAW_IMAGE}
+# Railway deploy image for OpenClaw. Build on Ubuntu and install OpenClaw from
+# npm so every clean build resolves the current release tagged "latest".
+ARG UBUNTU_VERSION=24.04
+FROM ubuntu:${UBUNTU_VERSION}
 
 USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG OPENCLAW_IMAGE_APT_PACKAGES=""
-ARG OPENCLAW_DOCKER_APT_PACKAGES=""
-ARG OPENCLAW_IMAGE_PIP_PACKAGES=""
+ARG NODE_MAJOR=24
+ARG OPENCLAW_VERSION=latest
 ARG OPENCLAW_INSTALL_BROWSER=1
 ARG EXTRA_NPM_PACKAGES=""
 ARG EXTRA_APT_PACKAGES=""
 ARG EXTRA_PIP_PACKAGES=""
 ARG INSTALL_PLAYWRIGHT_BROWSERS=""
 
+# Ubuntu's Node.js package is too old for OpenClaw. Install the current Node 24
+# release from NodeSource, then install OpenClaw through npm's latest dist-tag.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+  && mkdir -p /etc/apt/keyrings \
+  && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+    | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+  && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
+    > /etc/apt/sources.list.d/nodesource.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends nodejs \
+  && npm install -g "openclaw@${OPENCLAW_VERSION}" \
+  && npm cache clean --force \
+  && groupmod --new-name node ubuntu \
+  && usermod --login node --home /home/node --move-home ubuntu \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY extensions /tmp/openclaw-extensions
 COPY deploy/install-extensions.sh /usr/local/bin/install-openclaw-extensions
 RUN chmod +x /usr/local/bin/install-openclaw-extensions \
-  && OPENCLAW_IMAGE="${OPENCLAW_IMAGE}" \
-    OPENCLAW_IMAGE_APT_PACKAGES="${OPENCLAW_IMAGE_APT_PACKAGES}" \
-    OPENCLAW_DOCKER_APT_PACKAGES="${OPENCLAW_DOCKER_APT_PACKAGES}" \
-    OPENCLAW_IMAGE_PIP_PACKAGES="${OPENCLAW_IMAGE_PIP_PACKAGES}" \
+  && OPENCLAW_VERSION="${OPENCLAW_VERSION}" \
     OPENCLAW_INSTALL_BROWSER="${OPENCLAW_INSTALL_BROWSER}" \
     EXTRA_APT_PACKAGES="${EXTRA_APT_PACKAGES}" \
     EXTRA_NPM_PACKAGES="${EXTRA_NPM_PACKAGES}" \
@@ -53,6 +66,8 @@ RUN chmod +x /opt/railclaw/bin/railclaw.js
 USER root
 
 ENV HOME=/home/node \
+  NPM_CONFIG_PREFIX=/opt/openclaw-extensions \
+  PATH=/opt/openclaw-extensions/bin:$PATH \
   OPENCLAW_HOME=/home/node \
   OPENCLAW_STATE_DIR=/data/.openclaw \
   OPENCLAW_CONFIG_DIR=/data/.openclaw \

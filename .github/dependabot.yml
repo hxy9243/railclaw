@@ -23,6 +23,17 @@ updates:
         patterns:
           - "*"
 
+  - package-ecosystem: npm
+    directory: /extensions
+    schedule:
+      interval: weekly
+      day: monday
+      time: "00:00"
+    groups:
+      npm-extensions:
+        patterns:
+          - "*"
+
   - package-ecosystem: pip
     directory: /extensions
     schedule:

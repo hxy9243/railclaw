@@ -1,8 +1,0 @@
-# User-facing OpenClaw companion tools installed globally at image build time.
-# Prefer pinned package versions for production forks.
-@openai/codex
-@anthropic-ai/claude-code
-@google/gemini-cli
-obsidian-cli
-playwright
-defuddle

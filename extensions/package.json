@@ -1,0 +1,14 @@
+{
+  "name": "openclaw-extensions",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Locked user-facing tools included in the OpenClaw image",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.210",
+    "@google/gemini-cli": "0.50.0",
+    "@openai/codex": "0.144.4",
+    "defuddle": "0.19.1",
+    "obsidian-cli": "0.5.1",
+    "playwright": "1.61.1"
+  }
+}

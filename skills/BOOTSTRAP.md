@@ -85,10 +85,10 @@ railway variable set OPENCLAW_GATEWAY_BIND=lan --service openclaw --environment 
 railway variable set OPENCLAW_TZ=UTC --service openclaw --environment production
 ```
 
-Optional production pin:
+Optional production package pin (the default is npm's `latest` release):
 
 ```bash
-railway variable set OPENCLAW_IMAGE=alpine/openclaw:latest --service openclaw --environment production
+railway variable set OPENCLAW_VERSION=2026.7.1 --service openclaw --environment production
 ```
 
 Do not ask the user to paste production secrets into the agent chat or terminal. The user must set secret values directly in Railway after the first bootstrap deploy:

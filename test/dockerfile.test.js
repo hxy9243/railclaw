@@ -13,3 +13,12 @@ test('Dockerfile builds app as node and starts root bootstrap for Railway volume
   assert.doesNotMatch(dockerfile, /mkdir -p \/data/, 'runtime entrypoint should initialize mounted /data');
   assert.doesNotMatch(dockerfile, /chown -R node:node \/data/, 'runtime entrypoint should own mounted /data');
 });
+
+test('Dockerfile installs the latest OpenClaw package on Ubuntu', async () => {
+  const dockerfile = await fs.readFile(new URL('../Dockerfile', import.meta.url), 'utf8');
+
+  assert.match(dockerfile, /FROM ubuntu:\$\{UBUNTU_VERSION\}/);
+  assert.match(dockerfile, /ARG OPENCLAW_VERSION=latest/);
+  assert.match(dockerfile, /npm install -g "openclaw@\$\{OPENCLAW_VERSION\}"/);
+  assert.doesNotMatch(dockerfile, /alpine\/openclaw/);
+});

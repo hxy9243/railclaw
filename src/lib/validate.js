@@ -15,13 +15,16 @@ const REQUIRED_FILES = [
   'package.json',
   'package-lock.json',
   'extensions/apt.txt',
-  'extensions/npm.txt',
-  'extensions/pip.txt',
+  'extensions/package.json',
+  'extensions/package-lock.json',
+  'extensions/requirements.in',
   'extensions/requirements.txt',
   'deploy/install-extensions.sh',
+  'tools/extensions/lock.sh',
   '.github/dependabot.yml',
   '.github/workflows/validate.yml',
   '.github/workflows/build.yml',
+  '.github/workflows/lock-extensions.yml',
   '.github/workflows/smoke-test.yml',
   '.github/workflows/dependabot-automerge.yml',
   '.github/workflows/weekly-upgrade.yml',
@@ -45,6 +48,9 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   await validateJson(root, 'config/openclaw.bootstrap.json', failures);
   await validateJson(root, 'config/openclaw-distribution-state.bootstrap.json', failures);
   await validateJson(root, 'package.json', failures);
+  await validateJson(root, 'extensions/package.json', failures);
+  await validateJson(root, 'extensions/package-lock.json', failures);
+  await validateExactNpmExtensions(root, failures);
 
   const dockerfile = await read(root, 'Dockerfile');
   const railway = await read(root, 'railway.json');
@@ -53,15 +59,17 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   const bootstrap = await read(root, 'skills/BOOTSTRAP.md');
   const dependabot = await read(root, '.github/dependabot.yml');
   const weeklyUpgrade = await read(root, '.github/workflows/weekly-upgrade.yml');
+  const lockExtensions = await read(root, '.github/workflows/lock-extensions.yml');
 
-  requireContains(dockerfile, 'ARG OPENCLAW_IMAGE=alpine/openclaw:latest', 'Dockerfile must inherit the public OpenClaw image by default', failures);
-  requireContains(dockerfile, 'FROM ${OPENCLAW_IMAGE}', 'Dockerfile must use the configured OpenClaw base image', failures);
-  requireContains(dockerfile, 'OPENCLAW_IMAGE_APT_PACKAGES', 'Dockerfile must expose the official apt package build arg', failures);
-  requireContains(dockerfile, 'OPENCLAW_IMAGE_PIP_PACKAGES', 'Dockerfile must expose the official pip package build arg', failures);
+  requireContains(dockerfile, 'FROM ubuntu:${UBUNTU_VERSION}', 'Dockerfile must use the configured Ubuntu base image', failures);
+  requireContains(dockerfile, 'ARG OPENCLAW_VERSION=latest', 'Dockerfile must default to the latest OpenClaw package', failures);
+  requireContains(dockerfile, 'openclaw@${OPENCLAW_VERSION}', 'Dockerfile must install OpenClaw from npm', failures);
   requireContains(dockerfile, 'OPENCLAW_INSTALL_BROWSER', 'Dockerfile must expose the official browser install build arg', failures);
   requireContains(dockerfile, 'COPY extensions /tmp/openclaw-extensions', 'Dockerfile must copy extension manifests into the build', failures);
   requireContains(dockerfile, 'COPY --chown=node:node config /opt/railclaw/config', 'Dockerfile must copy bootstrap config templates into the image', failures);
   requireContains(dockerfile, 'install-openclaw-extensions', 'Dockerfile must install packages through the extension installer', failures);
+  requireContains(dockerfile, 'NPM_CONFIG_PREFIX=/opt/openclaw-extensions', 'Dockerfile must configure the global npm prefix', failures);
+  requireContains(dockerfile, 'PATH=/opt/openclaw-extensions/bin:$PATH', 'Dockerfile must expose global extension commands on PATH', failures);
   requireContains(dockerfile, '/usr/local/bin/openclaw-railway', 'Dockerfile must expose the openclaw-railway command', failures);
   requireContains(dockerfile, 'OPENCLAW_CONFIG_DIR=/data/.openclaw', 'Dockerfile must pin config to /data', failures);
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
@@ -78,6 +86,8 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(bootstrap, '/home/node/.openclaw -> /data/.openclaw', 'Bootstrap skill must document runtime path links', failures);
   requireContains(bootstrap, 'Do not use `railway deploy`', 'Bootstrap skill must document the Railway deploy caveat', failures);
   requireContains(dependabot, 'interval: weekly', 'Dependabot must keep the default weekly update cadence', failures);
+  requireContains(dependabot, 'directory: /extensions', 'Dependabot must update locked npm extensions', failures);
+  requireContains(lockExtensions, 'npm run lock:extensions', 'Extension workflow must regenerate dependency locks', failures);
   requireContains(weeklyUpgrade, 'cron: "0 0 * * 1"', 'Weekly upgrade workflow must run on the default weekly schedule', failures);
 
   const tracked = await gitFiles(root);
@@ -109,6 +119,19 @@ async function validateJson(root, file, failures) {
     JSON.parse(await fs.readFile(path.join(root, file), 'utf8'));
   } catch (error) {
     failures.push(`${file} is not valid JSON: ${error.message}`);
+  }
+}
+
+async function validateExactNpmExtensions(root, failures) {
+  try {
+    const manifest = JSON.parse(await fs.readFile(path.join(root, 'extensions/package.json'), 'utf8'));
+    for (const [name, version] of Object.entries(manifest.dependencies || {})) {
+      if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
+        failures.push(`npm extension must use an exact version: ${name}@${version}`);
+      }
+    }
+  } catch {
+    // validateJson reports malformed or missing manifests.
   }
 }
 
