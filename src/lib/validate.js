@@ -74,6 +74,8 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'OPENCLAW_CONFIG_DIR=/data/.openclaw', 'Dockerfile must pin config to /data', failures);
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
   requireContains(dockerfile, 'src/container/entrypoint.js', 'Dockerfile must use the Railclaw container entrypoint', failures);
+  const entrypoint = await read(root, 'src/container/entrypoint.js');
+  requireContains(entrypoint, "await runCommand('openclaw', ['doctor', '--fix']", 'Container entrypoint must repair OpenClaw config before startup', failures);
   requireContains(railway, '"healthcheckPath": "/healthz"', 'Railway healthcheck must use /healthz', failures);
   requireContains(railwayTemplate, 'volume("openclaw-volume"', 'Railway IaC must define the OpenClaw volume', failures);
   requireContains(railwayTemplate, '"/data": data', 'Railway IaC must mount the volume at /data', failures);

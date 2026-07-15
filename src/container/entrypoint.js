@@ -33,6 +33,13 @@ if (typeof process.getuid === 'function' && process.getuid() === 0) {
   await chownTree(process.env.HOME || '/home/node', nodeUid, nodeGid);
 }
 
+await runCommand('openclaw', ['doctor', '--fix'], {
+  stdio: 'inherit',
+  env: process.env,
+  uid: nodeUid,
+  gid: nodeGid,
+});
+
 const bind = process.env.OPENCLAW_GATEWAY_BIND || 'lan';
 const port = process.env.OPENCLAW_GATEWAY_PORT || process.env.PORT || '8080';
 const child = spawn('openclaw', ['gateway', '--bind', bind, '--port', port], {
@@ -46,6 +53,22 @@ child.on('exit', (code, signal) => {
   if (signal) process.kill(process.pid, signal);
   process.exit(code ?? 1);
 });
+
+function runCommand(command, args, options) {
+  return new Promise((resolve, reject) => {
+    const commandChild = spawn(command, args, options);
+    commandChild.once('error', reject);
+    commandChild.once('exit', (code, signal) => {
+      if (signal) {
+        reject(new Error(`${command} ${args.join(' ')} exited from signal ${signal}`));
+      } else if (code !== 0) {
+        reject(new Error(`${command} ${args.join(' ')} exited with code ${code}`));
+      } else {
+        resolve();
+      }
+    });
+  });
+}
 
 async function chownTree(target, uid, gid) {
   let stat;
