@@ -37,6 +37,18 @@ RUN apt-get update \
   && usermod --login node --home /home/node --move-home ubuntu \
   && rm -rf /var/lib/apt/lists/*
 
+# Install Github cli
+# Reference: https://github.com/cli/cli/blob/trunk/docs/install_linux.md
+RUN (type -p wget >/dev/null || (apt update && apt install wget -y)) \
+	&& mkdir -p -m 755 /etc/apt/keyrings \
+	&& out=$(mktemp) && wget -nv -O$out https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+	&& cat $out | tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null \
+	&& chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg \
+	&& mkdir -p -m 755 /etc/apt/sources.list.d \
+	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+	&& apt update \
+	&& apt install gh -y
+
 COPY extensions /tmp/openclaw-extensions
 COPY --chmod=0755 deploy/install-extensions.sh /usr/local/bin/install-openclaw-extensions
 RUN OPENCLAW_VERSION="${OPENCLAW_VERSION}" \
@@ -53,8 +65,7 @@ RUN mkdir -p /data \
   /opt/railclaw \
   /home/node/.config \
   && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/railclaw \
-  && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/openclaw-railway \
-  && chown -R node:node /data /home/node /opt/openclaw-manifests /opt/railclaw \
+  && chown -R node:node /data /home/node /opt/railclaw \
   && chmod -R a+rX /opt/openclaw-extensions /opt/playwright-browsers
 
 USER node
@@ -84,7 +95,7 @@ ENV HOME=/home/node \
 
 EXPOSE 8080
 
-# HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
-#   CMD node -e "const port = process.env.OPENCLAW_GATEWAY_PORT || process.env.PORT || '8080'; fetch('http://127.0.0.1:' + port + '/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
+  CMD node -e "const port = process.env.OPENCLAW_GATEWAY_PORT || process.env.PORT || '8080'; fetch('http://127.0.0.1:' + port + '/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["node", "/opt/railclaw/src/container/entrypoint.js"]
