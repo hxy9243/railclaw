@@ -27,6 +27,9 @@ export default defineRailway(() => {
       OPENCLAW_DISABLE_BONJOUR: "1",
       OPENCLAW_GATEWAY_BIND: "lan",
       OPENCLAW_TZ: "UTC",
+      // Railway mounts volumes as root. The entrypoint uses this temporary
+      // privilege to repair /data, then starts OpenClaw as UID/GID 1000.
+      RAILWAY_RUN_UID: "0",
       OPENCLAW_GATEWAY_TOKEN: preserve(),
     },
     volumeMounts: {

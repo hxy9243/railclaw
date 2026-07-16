@@ -83,7 +83,12 @@ railway variable set PORT=8080 --service openclaw --environment production
 railway variable set OPENCLAW_DISABLE_BONJOUR=1 --service openclaw --environment production
 railway variable set OPENCLAW_GATEWAY_BIND=lan --service openclaw --environment production
 railway variable set OPENCLAW_TZ=UTC --service openclaw --environment production
+railway variable set RAILWAY_RUN_UID=0 --service openclaw --environment production
 ```
+
+Railway mounts volumes as root. `RAILWAY_RUN_UID=0` lets the container
+entrypoint repair `/data` ownership; the entrypoint then starts OpenClaw as the
+non-root `node` user (UID/GID 1000).
 
 Optional production package pin (the default is npm's `latest` release):
 
@@ -154,6 +159,7 @@ Do not move these paths without updating the Dockerfile, Railway IaC, docs, vali
 
 - `railway config plan` points at the selected repo and branch.
 - Railway variables include non-secret defaults: `OPENCLAW_GATEWAY_PORT=8080`, `PORT=8080`, `OPENCLAW_DISABLE_BONJOUR=1`, `OPENCLAW_GATEWAY_BIND=lan`, and `OPENCLAW_TZ=UTC`.
+- Railway sets `RAILWAY_RUN_UID=0` for root-owned volume initialization while OpenClaw itself runs as UID/GID 1000.
 - The user confirms `OPENCLAW_GATEWAY_TOKEN` and any provider/channel secrets are configured in Railway.
 - GitHub Actions include validate, image build, smoke test, Dependabot automerge, and weekly upgrade checks.
 - `npm test` passes before shipping template changes.

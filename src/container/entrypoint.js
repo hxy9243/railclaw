@@ -7,13 +7,18 @@ import { bootstrapDistribution } from '../lib/distribution.js';
 
 const nodeUid = 1000;
 const nodeGid = 1000;
+const home = process.env.HOME || '/home/node';
 
 if (typeof process.getuid === 'function' && process.getuid() === 0) {
   await chownTree('/data', nodeUid, nodeGid);
+  await chownTree(home, nodeUid, nodeGid);
+  process.setgroups?.([nodeGid]);
+  process.setgid(nodeGid);
+  process.setuid(nodeUid);
 }
 
 await ensureContainerLayout({
-  home: process.env.HOME || '/home/node',
+  home,
   data: '/data',
 });
 
@@ -28,16 +33,9 @@ try {
 
 await repairConfigForContainer({ dataDir: '/data' });
 
-if (typeof process.getuid === 'function' && process.getuid() === 0) {
-  await chownTree('/data', nodeUid, nodeGid);
-  await chownTree(process.env.HOME || '/home/node', nodeUid, nodeGid);
-}
-
 await runCommand('openclaw', ['doctor', '--fix'], {
   stdio: 'inherit',
   env: process.env,
-  uid: nodeUid,
-  gid: nodeGid,
 });
 
 const bind = process.env.OPENCLAW_GATEWAY_BIND || 'lan';
@@ -45,8 +43,6 @@ const port = process.env.OPENCLAW_GATEWAY_PORT || process.env.PORT || '8080';
 const child = spawn('openclaw', ['gateway', '--bind', bind, '--port', port], {
   stdio: 'inherit',
   env: process.env,
-  uid: nodeUid,
-  gid: nodeGid,
 });
 
 child.on('exit', (code, signal) => {

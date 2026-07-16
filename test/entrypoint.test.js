@@ -9,5 +9,7 @@ test('entrypoint fixes OpenClaw config before starting the gateway', async () =>
 
   assert.match(entrypoint, /await runCommand\('openclaw', \['doctor', '--fix'\]/);
   assert.ok(entrypoint.indexOf(doctor) < entrypoint.indexOf(gateway), 'doctor should finish before the gateway starts');
-  assert.match(entrypoint, /uid: nodeUid,\n  gid: nodeGid/, 'doctor should run as the node user');
+  assert.match(entrypoint, /process\.setgid\(nodeGid\);\n  process\.setuid\(nodeUid\);/, 'entrypoint should permanently drop root before doctor runs');
+  assert.ok(entrypoint.indexOf('process.setuid(nodeUid)') < entrypoint.indexOf(doctor), 'privileges should drop before doctor runs');
+  assert.doesNotMatch(entrypoint, /uid: nodeUid/, 'children should inherit the non-root entrypoint identity');
 });

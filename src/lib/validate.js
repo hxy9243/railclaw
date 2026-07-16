@@ -70,6 +70,7 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'install-openclaw-extensions', 'Dockerfile must install packages through the extension installer', failures);
   requireContains(dockerfile, 'NPM_CONFIG_PREFIX=/opt/openclaw-extensions', 'Dockerfile must configure the global npm prefix', failures);
   requireContains(dockerfile, 'PATH=/opt/openclaw-extensions/bin:$PATH', 'Dockerfile must expose global extension commands on PATH', failures);
+  requireContains(dockerfile, 'PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers', 'Dockerfile must expose root-installed browsers to node', failures);
   requireContains(dockerfile, '/usr/local/bin/openclaw-railway', 'Dockerfile must expose the openclaw-railway command', failures);
   requireContains(dockerfile, 'OPENCLAW_CONFIG_DIR=/data/.openclaw', 'Dockerfile must pin config to /data', failures);
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
@@ -79,6 +80,7 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(railway, '"healthcheckPath": "/healthz"', 'Railway healthcheck must use /healthz', failures);
   requireContains(railwayTemplate, 'volume("openclaw-volume"', 'Railway IaC must define the OpenClaw volume', failures);
   requireContains(railwayTemplate, '"/data": data', 'Railway IaC must mount the volume at /data', failures);
+  requireContains(railwayTemplate, 'RAILWAY_RUN_UID: "0"', 'Railway IaC must enable root-owned volume initialization', failures);
   requireContains(railwayTemplate, 'source: github(repo', 'Railway IaC must connect the service to a GitHub source', failures);
   requireContains(agents, 'skills/BOOTSTRAP.md', 'AGENTS.md must point bootstrap work to skills/BOOTSTRAP.md', failures);
   requireContains(bootstrap, 'railway config apply', 'Bootstrap skill must document Railway IaC apply', failures);

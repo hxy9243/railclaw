@@ -12,6 +12,7 @@ test('Railway IaC template mounts the OpenClaw volume at /data', async () => {
   assert.equal(service.build.builder, 'DOCKERFILE');
   assert.equal(service.build.dockerfilePath, 'Dockerfile');
   assert.equal(service.deploy.healthcheckPath, '/healthz');
+  assert.equal(service.variables.RAILWAY_RUN_UID.value, '0');
   assert.equal(service.volumeMounts['openclaw-volume'].mountPath, '/data');
   assert.equal(volume.sizeMB, 50_000);
 });

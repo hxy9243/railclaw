@@ -9,12 +9,16 @@ USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NODE_MAJOR=24
-ARG OPENCLAW_VERSION=2026.7.1
+ARG OPENCLAW_VERSION=2026.6.10
 ARG OPENCLAW_INSTALL_BROWSER=1
 ARG EXTRA_NPM_PACKAGES=""
 ARG EXTRA_APT_PACKAGES=""
 ARG EXTRA_PIP_PACKAGES=""
 ARG INSTALL_PLAYWRIGHT_BROWSERS=""
+
+# Root installs the shared browser payload here so the runtime node user can
+# discover it without depending on root's private cache directory.
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
 
 # Ubuntu's Node.js package is too old for OpenClaw. Install the current Node 24
 # release from NodeSource, then install the pinned OpenClaw release from npm.
@@ -34,9 +38,8 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY extensions /tmp/openclaw-extensions
-COPY deploy/install-extensions.sh /usr/local/bin/install-openclaw-extensions
-RUN chmod +x /usr/local/bin/install-openclaw-extensions \
-  && OPENCLAW_VERSION="${OPENCLAW_VERSION}" \
+COPY --chmod=0755 deploy/install-extensions.sh /usr/local/bin/install-openclaw-extensions
+RUN OPENCLAW_VERSION="${OPENCLAW_VERSION}" \
     OPENCLAW_INSTALL_BROWSER="${OPENCLAW_INSTALL_BROWSER}" \
     EXTRA_APT_PACKAGES="${EXTRA_APT_PACKAGES}" \
     EXTRA_NPM_PACKAGES="${EXTRA_NPM_PACKAGES}" \
@@ -44,11 +47,15 @@ RUN chmod +x /usr/local/bin/install-openclaw-extensions \
     INSTALL_PLAYWRIGHT_BROWSERS="${INSTALL_PLAYWRIGHT_BROWSERS}" \
     install-openclaw-extensions
 
-RUN mkdir -p /opt/railclaw \
+RUN mkdir -p /data \
+  /opt/openclaw-extensions \
+  /opt/playwright-browsers \
+  /opt/railclaw \
   /home/node/.config \
   && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/railclaw \
   && ln -sf /opt/railclaw/bin/railclaw.js /usr/local/bin/openclaw-railway \
-  && chown -R node:node /home/node /opt/openclaw-manifests /opt/railclaw
+  && chown -R node:node /data /home/node /opt/openclaw-manifests /opt/railclaw \
+  && chmod -R a+rX /opt/openclaw-extensions /opt/playwright-browsers
 
 USER node
 
@@ -60,10 +67,6 @@ COPY --chown=node:node bin /opt/railclaw/bin
 COPY --chown=node:node config /opt/railclaw/config
 COPY --chown=node:node src /opt/railclaw/src
 RUN chmod +x /opt/railclaw/bin/railclaw.js
-
-# Railway mounts fresh volumes as root. The entrypoint starts as root only to
-# repair /data ownership and then spawns OpenClaw as the node user.
-USER root
 
 ENV HOME=/home/node \
   NPM_CONFIG_PREFIX=/opt/openclaw-extensions \
