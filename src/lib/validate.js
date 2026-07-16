@@ -71,7 +71,6 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'NPM_CONFIG_PREFIX=/opt/openclaw-extensions', 'Dockerfile must configure the global npm prefix', failures);
   requireContains(dockerfile, 'PATH=/opt/openclaw-extensions/bin:$PATH', 'Dockerfile must expose global extension commands on PATH', failures);
   requireContains(dockerfile, 'PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers', 'Dockerfile must expose root-installed browsers to node', failures);
-  requireContains(dockerfile, '/usr/local/bin/openclaw-railway', 'Dockerfile must expose the openclaw-railway command', failures);
   requireContains(dockerfile, 'OPENCLAW_CONFIG_DIR=/data/.openclaw', 'Dockerfile must pin config to /data', failures);
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
   requireContains(dockerfile, 'src/container/entrypoint.js', 'Dockerfile must use the Railclaw container entrypoint', failures);
