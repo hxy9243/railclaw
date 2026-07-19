@@ -2,7 +2,7 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import { ensureContainerLayout } from '../lib/container-layout.js';
-import { initConfig, repairConfigForContainer } from '../lib/config.js';
+import { initConfig, repairConfigForContainer, repairStateForContainer } from '../lib/config.js';
 import { bootstrapDistribution } from '../lib/distribution.js';
 
 const nodeUid = 1000;
@@ -32,6 +32,7 @@ try {
 }
 
 await repairConfigForContainer({ dataDir: '/data' });
+await repairStateForContainer({ dataDir: '/data' });
 
 await runCommand('openclaw', ['doctor', '--fix'], {
   stdio: 'inherit',

@@ -90,6 +90,106 @@ export async function repairConfigForContainer({ dataDir = '/data' } = {}) {
   return { changed: true, configPath, backupPath, removedCount };
 }
 
+export async function repairStateForContainer({ dataDir = '/data' } = {}) {
+  const openclawDir = path.join(dataDir, '.openclaw');
+  const sqlitePath = path.join(openclawDir, 'state.sqlite');
+
+  if (!await exists(sqlitePath)) {
+    return { repairedCount: 0 };
+  }
+
+  let repairedCount = 0;
+
+  const rootLegacyFiles = [
+    'update-check.json',
+    'plugin-approvals.json',
+    'conversations.json',
+    'exec-approvals.json',
+  ];
+  for (const file of rootLegacyFiles) {
+    const filePath = path.join(openclawDir, file);
+    if (await exists(filePath)) {
+      await archiveLegacyFile(filePath);
+      repairedCount += 1;
+    }
+  }
+
+  const cronJobsPath = path.join(openclawDir, 'cron', 'jobs.json');
+  if (await exists(cronJobsPath)) {
+    await archiveLegacyFile(cronJobsPath);
+    repairedCount += 1;
+  }
+
+  const pluginsIndexPath = path.join(openclawDir, 'plugins', 'index.json');
+  if (await exists(pluginsIndexPath)) {
+    await archiveLegacyFile(pluginsIndexPath);
+    repairedCount += 1;
+  }
+
+  const voiceWakeDir = path.join(openclawDir, 'voice-wake');
+  if (await exists(voiceWakeDir)) {
+    try {
+      const vwEntries = await fs.readdir(voiceWakeDir);
+      for (const vwFile of vwEntries) {
+        if (!vwFile.endsWith('.migrated') && !vwFile.endsWith('.bak')) {
+          await archiveLegacyFile(path.join(voiceWakeDir, vwFile));
+          repairedCount += 1;
+        }
+      }
+    } catch {}
+  }
+
+  const sessionBaseDirs = [
+    path.join(openclawDir, 'sessions'),
+    path.join(openclawDir, 'agents'),
+  ];
+
+  for (const baseDir of sessionBaseDirs) {
+    if (!await exists(baseDir)) continue;
+    try {
+      const items = await fs.readdir(baseDir, { withFileTypes: true });
+      for (const item of items) {
+        if (item.isDirectory()) {
+          const targetDir = baseDir.endsWith('agents') 
+            ? path.join(baseDir, item.name, 'sessions') 
+            : baseDir;
+          if (await exists(targetDir)) {
+            await cleanSidecarsInDir(targetDir);
+          }
+        }
+      }
+    } catch {}
+  }
+
+  async function cleanSidecarsInDir(dirPath) {
+    try {
+      const files = await fs.readdir(dirPath);
+      for (const f of files) {
+        if (f.includes('.jsonl.') && f.endsWith('.json') && !f.endsWith('.migrated') && !f.endsWith('.bak')) {
+          await archiveLegacyFile(path.join(dirPath, f));
+          repairedCount += 1;
+        }
+      }
+    } catch {}
+  }
+
+  return { repairedCount };
+}
+
+async function archiveLegacyFile(filePath) {
+  let dest = `${filePath}.migrated`;
+  if (await exists(dest)) {
+    dest = `${filePath}.${Date.now()}.bak`;
+  }
+  try {
+    await fs.rename(filePath, dest);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      await fs.rm(filePath, { force: true }).catch(() => {});
+    }
+  }
+}
+
 async function exists(file) {
   try {
     await fs.access(file);
@@ -98,3 +198,4 @@ async function exists(file) {
     return false;
   }
 }
+
