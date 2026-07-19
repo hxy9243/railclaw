@@ -14,9 +14,10 @@ test('container layout creates persisted data dirs and home symlinks', async () 
     await ensureContainerLayout({ home, data });
 
     assert.equal(await fs.readlink(path.join(home, '.openclaw')), path.join(data, '.openclaw'));
-    assert.equal(await fs.readlink(path.join(home, '.config/openclaw')), path.join(data, '.config/openclaw'));
+    assert.equal(await fs.readlink(path.join(home, '.config')), path.join(data, '.config'));
     assert.equal(await fs.readlink(path.join(home, '.codex')), path.join(data, '.codex'));
-    assert.equal(await fs.readlink(path.join(home, '.config/opencode')), path.join(data, '.config/opencode'));
+    assert.equal((await fs.stat(path.join(data, '.config/openclaw'))).isDirectory(), true);
+    assert.equal((await fs.stat(path.join(data, '.config/opencode'))).isDirectory(), true);
     assert.equal((await fs.stat(path.join(data, 'workspace'))).isDirectory(), true);
   } finally {
     await fs.rm(tmp, { recursive: true, force: true });
@@ -28,22 +29,22 @@ test('container layout resolves circular symlink loops without throwing ELOOP', 
   try {
     const home = path.join(tmp, 'home/node');
     const data = path.join(tmp, 'data');
-    const dataAuth = path.join(data, '.config/openclaw');
-    const homeAuth = path.join(home, '.config/openclaw');
+    const dataConfig = path.join(data, '.config');
+    const homeConfig = path.join(home, '.config');
 
-    await fs.mkdir(path.dirname(dataAuth), { recursive: true });
-    await fs.mkdir(path.dirname(homeAuth), { recursive: true });
+    await fs.mkdir(path.dirname(dataConfig), { recursive: true });
+    await fs.mkdir(path.dirname(homeConfig), { recursive: true });
 
-    // Create circular symlinks between home and data auth dirs
-    await fs.symlink(homeAuth, dataAuth, 'dir');
-    await fs.symlink(dataAuth, homeAuth, 'dir');
+    // Create circular symlinks between home and data config dirs
+    await fs.symlink(homeConfig, dataConfig, 'dir');
+    await fs.symlink(dataConfig, homeConfig, 'dir');
 
     await ensureContainerLayout({ home, data });
 
-    const dataStat = await fs.lstat(dataAuth);
+    const dataStat = await fs.lstat(dataConfig);
     assert.equal(dataStat.isDirectory(), true);
     assert.equal(dataStat.isSymbolicLink(), false);
-    assert.equal(await fs.readlink(homeAuth), dataAuth);
+    assert.equal(await fs.readlink(homeConfig), dataConfig);
   } finally {
     await fs.rm(tmp, { recursive: true, force: true });
   }
@@ -74,14 +75,15 @@ test('container layout preserves existing files in home directory when convertin
   try {
     const home = path.join(tmp, 'home/node');
     const data = path.join(tmp, 'data');
-    const homeAuth = path.join(home, '.config/openclaw');
+    const homeConfig = path.join(home, '.config');
+    const homeAuth = path.join(homeConfig, 'openclaw');
 
     await fs.mkdir(homeAuth, { recursive: true });
     await fs.writeFile(path.join(homeAuth, 'key'), 'secret-key-data\n');
 
     await ensureContainerLayout({ home, data });
 
-    assert.equal(await fs.readlink(homeAuth), path.join(data, '.config/openclaw'));
+    assert.equal(await fs.readlink(homeConfig), path.join(data, '.config'));
     assert.equal(await fs.readFile(path.join(data, '.config/openclaw/key'), 'utf8'), 'secret-key-data\n');
   } finally {
     await fs.rm(tmp, { recursive: true, force: true });

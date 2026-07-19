@@ -3,6 +3,7 @@ import path from 'node:path';
 
 export const DATA_DIRS = {
   config: '/data/.openclaw',
+  globalConfig: '/data/.config',
   auth: '/data/.config/openclaw',
   codex: '/data/.codex',
   opencode: '/data/.config/opencode',
@@ -11,34 +12,32 @@ export const DATA_DIRS = {
 
 export const HOME_LINKS = {
   openclaw: '/home/node/.openclaw',
-  auth: '/home/node/.config/openclaw',
+  config: '/home/node/.config',
   codex: '/home/node/.codex',
-  opencode: '/home/node/.config/opencode',
 };
 
 export async function ensureContainerLayout({ home = '/home/node', data = '/data' } = {}) {
   const openclawData = path.join(data, '.openclaw');
+  const globalConfigData = path.join(data, '.config');
   const authData = path.join(data, '.config/openclaw');
   const codexData = path.join(data, '.codex');
   const opencodeData = path.join(data, '.config/opencode');
   const workspaceData = path.join(data, 'workspace');
+
   const openclawHome = path.join(home, '.openclaw');
+  const globalConfigHome = path.join(home, '.config');
   const codexHome = path.join(home, '.codex');
-  const configHome = path.join(home, '.config');
-  const authHome = path.join(configHome, 'openclaw');
-  const opencodeHome = path.join(configHome, 'opencode');
 
   await ensureRealDir(openclawData);
+  await ensureRealDir(globalConfigData);
   await ensureRealDir(authData);
-  await ensureRealDir(codexData);
   await ensureRealDir(opencodeData);
+  await ensureRealDir(codexData);
   await ensureRealDir(workspaceData);
-  await ensureRealDir(configHome);
 
   await replaceWithSymlink(openclawHome, openclawData);
-  await replaceWithSymlink(authHome, authData);
+  await replaceWithSymlink(globalConfigHome, globalConfigData);
   await replaceWithSymlink(codexHome, codexData);
-  await replaceWithSymlink(opencodeHome, opencodeData);
 }
 
 export async function ensureRealDir(dirPath) {
@@ -98,11 +97,24 @@ async function copyDirectoryContents(source, target) {
   for (const entry of entries) {
     const srcPath = path.join(source, entry.name);
     const destPath = path.join(target, entry.name);
-    try {
-      await fs.lstat(destPath);
-    } catch (error) {
-      if (error.code === 'ENOENT') {
-        await fs.cp(srcPath, destPath, { recursive: true });
+    if (entry.isDirectory()) {
+      await copyDirectoryContents(srcPath, destPath);
+    } else if (entry.isSymbolicLink()) {
+      try {
+        await fs.lstat(destPath);
+      } catch (error) {
+        if (error.code === 'ENOENT') {
+          const link = await fs.readlink(srcPath);
+          await fs.symlink(link, destPath);
+        }
+      }
+    } else if (entry.isFile()) {
+      try {
+        await fs.lstat(destPath);
+      } catch (error) {
+        if (error.code === 'ENOENT') {
+          await fs.copyFile(srcPath, destPath);
+        }
       }
     }
   }
