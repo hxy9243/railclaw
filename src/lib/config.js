@@ -92,9 +92,12 @@ export async function repairConfigForContainer({ dataDir = '/data' } = {}) {
 
 export async function repairStateForContainer({ dataDir = '/data' } = {}) {
   const openclawDir = path.join(dataDir, '.openclaw');
-  const sqlitePath = path.join(openclawDir, 'state.sqlite');
+  if (!await exists(openclawDir)) {
+    return { repairedCount: 0 };
+  }
 
-  if (!await exists(sqlitePath)) {
+  const hasSqlite = await hasSqliteState(openclawDir);
+  if (!hasSqlite) {
     return { repairedCount: 0 };
   }
 
@@ -139,41 +142,63 @@ export async function repairStateForContainer({ dataDir = '/data' } = {}) {
     } catch {}
   }
 
-  const sessionBaseDirs = [
-    path.join(openclawDir, 'sessions'),
-    path.join(openclawDir, 'agents'),
-  ];
-
-  for (const baseDir of sessionBaseDirs) {
-    if (!await exists(baseDir)) continue;
-    try {
-      const items = await fs.readdir(baseDir, { withFileTypes: true });
-      for (const item of items) {
-        if (item.isDirectory()) {
-          const targetDir = baseDir.endsWith('agents') 
-            ? path.join(baseDir, item.name, 'sessions') 
-            : baseDir;
-          if (await exists(targetDir)) {
-            await cleanSidecarsInDir(targetDir);
-          }
-        }
-      }
-    } catch {}
-  }
-
-  async function cleanSidecarsInDir(dirPath) {
-    try {
-      const files = await fs.readdir(dirPath);
-      for (const f of files) {
-        if (f.includes('.jsonl.') && f.endsWith('.json') && !f.endsWith('.migrated') && !f.endsWith('.bak')) {
-          await archiveLegacyFile(path.join(dirPath, f));
-          repairedCount += 1;
-        }
-      }
-    } catch {}
-  }
+  repairedCount += await archiveSidecarsRecursively(openclawDir);
 
   return { repairedCount };
+}
+
+async function hasSqliteState(openclawDir) {
+  const primaryDbPaths = [
+    path.join(openclawDir, 'state', 'openclaw.sqlite'),
+    path.join(openclawDir, 'plugin-state', 'state.sqlite'),
+    path.join(openclawDir, 'flows', 'registry.sqlite'),
+    path.join(openclawDir, 'tasks', 'runs.sqlite'),
+    path.join(openclawDir, 'cron', 'cron.sqlite'),
+    path.join(openclawDir, 'state.sqlite'),
+    path.join(openclawDir, 'openclaw.sqlite'),
+  ];
+  for (const dbPath of primaryDbPaths) {
+    if (await exists(dbPath)) return true;
+  }
+  return await containsAnySqlite(openclawDir);
+}
+
+async function containsAnySqlite(dir) {
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (await containsAnySqlite(fullPath)) return true;
+      } else if (entry.isFile() && entry.name.endsWith('.sqlite')) {
+        return true;
+      }
+    }
+  } catch {}
+  return false;
+}
+
+async function archiveSidecarsRecursively(dir) {
+  let count = 0;
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        count += await archiveSidecarsRecursively(fullPath);
+      } else if (
+        entry.isFile() &&
+        entry.name.includes('.jsonl.') &&
+        entry.name.endsWith('.json') &&
+        !entry.name.endsWith('.migrated') &&
+        !entry.name.endsWith('.bak')
+      ) {
+        await archiveLegacyFile(fullPath);
+        count += 1;
+      }
+    }
+  } catch {}
+  return count;
 }
 
 async function archiveLegacyFile(filePath) {

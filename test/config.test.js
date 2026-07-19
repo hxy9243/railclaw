@@ -67,19 +67,21 @@ test('container config repair removes host-local paths and backs up config', asy
   }
 });
 
-test('container state repair archives legacy state files when state.sqlite exists', async () => {
+test('container state repair archives legacy state files when state.sqlite or state/openclaw.sqlite exists', async () => {
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'railclaw-state-'));
   try {
     const openclawDir = path.join(tmp, '.openclaw');
+    const stateDbDir = path.join(openclawDir, 'state');
     const sessionsDir = path.join(openclawDir, 'agents', 'main', 'sessions');
+    await fs.mkdir(stateDbDir, { recursive: true });
     await fs.mkdir(sessionsDir, { recursive: true });
 
-    // Create sqlite DB indicator
-    await fs.writeFile(path.join(openclawDir, 'state.sqlite'), 'sqlite data');
+    // Create sqlite DB indicator at canonical OpenClaw location
+    await fs.writeFile(path.join(stateDbDir, 'openclaw.sqlite'), 'sqlite data');
 
     // Create legacy state files that cause migration warnings
     const updateCheck = path.join(openclawDir, 'update-check.json');
-    const sidecar = path.join(sessionsDir, 'session1.jsonl.codex-app-server.json');
+    const sidecar = path.join(sessionsDir, '322d14d8-160a-4232-9d69-5c20846baeaf.jsonl.codex-app-server.json');
     await fs.writeFile(updateCheck, '{"lastCheckedAt":"2026-07-01"}');
     await fs.writeFile(sidecar, '{"sidecar":true}');
 
