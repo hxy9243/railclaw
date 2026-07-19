@@ -1,12 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { ensureRealDir } from './container-layout.js';
 
 export async function initConfig({ dataDir = '/data', domain, force = false } = {}) {
   const configDir = path.join(dataDir, '.openclaw');
   const workspaceDir = path.join(dataDir, 'workspace');
   const configPath = path.join(configDir, 'openclaw.json');
-  await fs.mkdir(configDir, { recursive: true });
-  await fs.mkdir(workspaceDir, { recursive: true });
+  await ensureRealDir(configDir);
+  await ensureRealDir(workspaceDir);
 
   if (!force && await exists(configPath)) {
     throw new Error(`${configPath} already exists; pass --force to replace it`);

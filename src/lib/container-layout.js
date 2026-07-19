@@ -28,12 +28,12 @@ export async function ensureContainerLayout({ home = '/home/node', data = '/data
   const authHome = path.join(configHome, 'openclaw');
   const opencodeHome = path.join(configHome, 'opencode');
 
-  await fs.mkdir(openclawData, { recursive: true });
-  await fs.mkdir(authData, { recursive: true });
-  await fs.mkdir(codexData, { recursive: true });
-  await fs.mkdir(opencodeData, { recursive: true });
-  await fs.mkdir(workspaceData, { recursive: true });
-  await fs.mkdir(configHome, { recursive: true });
+  await ensureRealDir(openclawData);
+  await ensureRealDir(authData);
+  await ensureRealDir(codexData);
+  await ensureRealDir(opencodeData);
+  await ensureRealDir(workspaceData);
+  await ensureRealDir(configHome);
 
   await replaceWithSymlink(openclawHome, openclawData);
   await replaceWithSymlink(authHome, authData);
@@ -41,16 +41,70 @@ export async function ensureContainerLayout({ home = '/home/node', data = '/data
   await replaceWithSymlink(opencodeHome, opencodeData);
 }
 
-async function replaceWithSymlink(linkPath, targetPath) {
+export async function ensureRealDir(dirPath) {
+  const resolved = path.resolve(dirPath);
+  const parts = resolved.split(path.sep).filter(Boolean);
+  let current = path.parse(resolved).root;
+
+  for (const part of parts) {
+    current = path.join(current, part);
+    try {
+      const stat = await fs.lstat(current);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) {
+        await fs.rm(current, { recursive: true, force: true });
+        await fs.mkdir(current, { recursive: true });
+      }
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        await fs.mkdir(current, { recursive: true });
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
+export async function replaceWithSymlink(linkPath, targetPath) {
+  await ensureRealDir(targetPath);
+
   try {
     const stat = await fs.lstat(linkPath);
     if (stat.isSymbolicLink()) {
       const current = await fs.readlink(linkPath);
-      if (current === targetPath) return;
+      if (current === targetPath) {
+        const targetStat = await fs.lstat(targetPath).catch(() => null);
+        if (targetStat && targetStat.isDirectory() && !targetStat.isSymbolicLink()) {
+          return;
+        }
+      }
+      await fs.rm(linkPath, { recursive: true, force: true });
+    } else if (stat.isDirectory()) {
+      await copyDirectoryContents(linkPath, targetPath);
+      await fs.rm(linkPath, { recursive: true, force: true });
+    } else {
+      await fs.rm(linkPath, { recursive: true, force: true });
     }
-    await fs.rm(linkPath, { recursive: true, force: true });
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
+
+  await ensureRealDir(path.dirname(linkPath));
   await fs.symlink(targetPath, linkPath, 'dir');
 }
+
+async function copyDirectoryContents(source, target) {
+  await fs.mkdir(target, { recursive: true });
+  const entries = await fs.readdir(source, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(source, entry.name);
+    const destPath = path.join(target, entry.name);
+    try {
+      await fs.lstat(destPath);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        await fs.cp(srcPath, destPath, { recursive: true });
+      }
+    }
+  }
+}
+

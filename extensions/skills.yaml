@@ -1,3 +1,6 @@
-# Future source of truth for build-time skills/plugins.
-# Runtime user state should still live under /data.
-skills: []
+# Skills installed from Clawhub
+clawhub: []
+
+# Skills installed via npx skills install
+npx: []
+

@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import * as tar from 'tar';
 import { expandHome } from './paths.js';
+import { ensureRealDir } from './container-layout.js';
 
 const FORMAT = 'railclaw-migration-v1';
 const ENCRYPTION_MAGIC = 'railclaw-enc-v1';
@@ -116,7 +117,7 @@ export async function restoreMigration(archivePath, options = {}) {
     }
 
     for (const [source, target] of targets) {
-      await fs.mkdir(path.dirname(target), { recursive: true });
+      await ensureRealDir(path.dirname(target));
       await fs.rm(target, { recursive: true, force: true });
       await copyTree(path.join(extractDir, source), target, { preserveMode: true });
     }

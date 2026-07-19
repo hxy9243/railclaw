@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { generateToken } from './token.js';
 import { initConfig } from './config.js';
+import { ensureRealDir } from './container-layout.js';
 
 export const DISTRIBUTION_VERSION = '0.1.0';
 export const SCHEMA_VERSION = 1;
@@ -13,9 +14,9 @@ export async function bootstrapDistribution({ dataDir = '/data', domain } = {}) 
   const statePath = path.join(distributionDir, 'state.json');
   const configPath = path.join(stateDir, 'openclaw.json');
 
-  await fs.mkdir(stateDir, { recursive: true });
-  await fs.mkdir(workspaceDir, { recursive: true });
-  await fs.mkdir(distributionDir, { recursive: true });
+  await ensureRealDir(stateDir);
+  await ensureRealDir(workspaceDir);
+  await ensureRealDir(distributionDir);
 
   let createdConfig = false;
   if (!await exists(configPath)) {
