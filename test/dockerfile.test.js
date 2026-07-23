@@ -14,8 +14,21 @@ test('Dockerfile installs system dependencies as root and runs the image as node
   assert.ok(extensionInstall < nodeBuild, 'system extensions should be installed before switching to node');
   assert.equal(effectiveUsers.at(-1), 'node', 'the image runtime user should be node');
   assert.match(dockerfile, /COPY --chmod=0755 deploy\/install-extensions\.sh/);
-  assert.match(dockerfile, /ENV PLAYWRIGHT_BROWSERS_PATH=\/opt\/playwright-browsers/);
+  assert.match(dockerfile, /PLAYWRIGHT_BROWSERS_PATH=\/opt\/playwright-browsers/);
   assert.match(dockerfile, /chown -R node:node \/data \/home\/node \/opt\/railclaw/);
+});
+
+test('Dockerfile installs Bun and locked Bun extensions', async () => {
+  const dockerfile = await fs.readFile(new URL('../Dockerfile', import.meta.url), 'utf8');
+  const manifest = JSON.parse(await fs.readFile(new URL('../extensions/bun/package.json', import.meta.url), 'utf8'));
+
+  assert.match(dockerfile, /^ARG BUN_VERSION=\d+\.\d+\.\d+$/m);
+  assert.match(dockerfile, /bash -s "bun-v\$\{BUN_VERSION\}"/);
+  assert.match(dockerfile, /bun install --frozen-lockfile --production/);
+  assert.match(dockerfile, /PATH=\/opt\/bun\/bin:\$PATH/);
+  assert.match(dockerfile, /PATH=\/opt\/openclaw-bun-extensions\/node_modules\/\.bin:\/opt\/openclaw-extensions\/bin:\$PATH/);
+  assert.equal(manifest.dependencies.gbrain, 'github:garrytan/gbrain');
+  assert.ok(manifest.trustedDependencies.includes('gbrain'));
 });
 
 test('Dockerfile installs a pinned OpenClaw package on Ubuntu', async () => {

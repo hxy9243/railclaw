@@ -15,6 +15,7 @@ openclaw-migration-*.tar*
 *.tgz
 *.zip
 node_modules
+**/node_modules
 coverage
 .cache
 .tmp

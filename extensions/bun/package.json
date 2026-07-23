@@ -1,0 +1,10 @@
+{
+  "name": "openclaw-bun-extensions",
+  "private": true,
+  "dependencies": {
+    "gbrain": "github:garrytan/gbrain"
+  },
+  "trustedDependencies": [
+    "gbrain"
+  ]
+}

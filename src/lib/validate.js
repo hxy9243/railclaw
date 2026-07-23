@@ -15,6 +15,8 @@ const REQUIRED_FILES = [
   'package.json',
   'package-lock.json',
   'extensions/apt.txt',
+  'extensions/bun/package.json',
+  'extensions/bun/bun.lock',
   'extensions/package.json',
   'extensions/package-lock.json',
   'extensions/requirements.in',
@@ -48,6 +50,7 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   await validateJson(root, 'config/openclaw.bootstrap.json', failures);
   await validateJson(root, 'config/openclaw-distribution-state.bootstrap.json', failures);
   await validateJson(root, 'package.json', failures);
+  await validateJson(root, 'extensions/bun/package.json', failures);
   await validateJson(root, 'extensions/package.json', failures);
   await validateJson(root, 'extensions/package-lock.json', failures);
   await validateExactNpmExtensions(root, failures);
@@ -65,11 +68,13 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireMatch(dockerfile, /^ARG OPENCLAW_VERSION=\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/m, 'Dockerfile must pin an explicit OpenClaw package version', failures);
   requireContains(dockerfile, 'openclaw@${OPENCLAW_VERSION}', 'Dockerfile must install OpenClaw from npm', failures);
   requireContains(dockerfile, 'OPENCLAW_INSTALL_BROWSER', 'Dockerfile must expose the official browser install build arg', failures);
+  requireContains(dockerfile, 'bun install --frozen-lockfile --production', 'Dockerfile must install locked Bun extensions', failures);
+  requireContains(dockerfile, '/opt/bun/bin', 'Dockerfile must expose Bun on PATH', failures);
   requireContains(dockerfile, 'COPY extensions /tmp/openclaw-extensions', 'Dockerfile must copy extension manifests into the build', failures);
   requireContains(dockerfile, 'COPY --chown=node:node config /opt/railclaw/config', 'Dockerfile must copy bootstrap config templates into the image', failures);
   requireContains(dockerfile, 'install-openclaw-extensions', 'Dockerfile must install packages through the extension installer', failures);
   requireContains(dockerfile, 'NPM_CONFIG_PREFIX=/opt/openclaw-extensions', 'Dockerfile must configure the global npm prefix', failures);
-  requireContains(dockerfile, 'PATH=/opt/openclaw-extensions/bin:$PATH', 'Dockerfile must expose global extension commands on PATH', failures);
+  requireContains(dockerfile, '/opt/openclaw-extensions/bin:$PATH', 'Dockerfile must expose global extension commands on PATH', failures);
   requireContains(dockerfile, 'PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers', 'Dockerfile must expose root-installed browsers to node', failures);
   requireContains(dockerfile, 'OPENCLAW_CONFIG_DIR=/data/.openclaw', 'Dockerfile must pin config to /data', failures);
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);

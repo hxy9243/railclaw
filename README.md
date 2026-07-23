@@ -26,6 +26,8 @@ Edit the extension manifests before deploying or before opening an update PR:
 
 ```text
 extensions/apt.txt
+extensions/bun/package.json
+extensions/bun/bun.lock
 extensions/package.json
 extensions/package-lock.json
 extensions/requirements.in
@@ -35,6 +37,8 @@ extensions/skills.yaml
 ```
 
 Add npm tools with `npm install --save-exact --prefix extensions PACKAGE`.
+Add Bun tools to `extensions/bun/package.json`, then regenerate its lockfile with
+`bun install --cwd extensions/bun --lockfile-only`.
 Add exact Python requirements to `extensions/requirements.in`, then run
 `python3 -m pip install pip-tools` followed by `npm run lock:extensions`. Commit
 both the declarations and generated lockfiles.

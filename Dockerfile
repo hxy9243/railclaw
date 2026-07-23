@@ -9,6 +9,7 @@ USER root
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG NODE_MAJOR=24
+ARG BUN_VERSION=1.3.14
 ARG OPENCLAW_VERSION=2026.7.1-2
 ARG OPENCLAW_INSTALL_BROWSER=1
 ARG EXTRA_NPM_PACKAGES=""
@@ -18,12 +19,14 @@ ARG INSTALL_PLAYWRIGHT_BROWSERS=""
 
 # Root installs the shared browser payload here so the runtime node user can
 # discover it without depending on root's private cache directory.
-ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
+ENV BUN_INSTALL=/opt/bun \
+  PATH=/opt/bun/bin:$PATH \
+  PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
 
 # Ubuntu's Node.js package is too old for OpenClaw. Install the current Node 24
 # release from NodeSource, then install the pinned OpenClaw release from npm.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates curl gnupg \
+  && apt-get install -y --no-install-recommends ca-certificates curl gnupg unzip \
   && mkdir -p /etc/apt/keyrings \
   && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
     | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
@@ -32,6 +35,8 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install -y --no-install-recommends nodejs \
   && npm install -g "openclaw@${OPENCLAW_VERSION}" \
+  && curl -fsSL https://bun.com/install | bash -s "bun-v${BUN_VERSION}" \
+  && bun --version \
   && npm cache clean --force \
   && groupmod --new-name node ubuntu \
   && usermod --login node --home /home/node --move-home ubuntu \
@@ -59,6 +64,13 @@ RUN OPENCLAW_VERSION="${OPENCLAW_VERSION}" \
     INSTALL_PLAYWRIGHT_BROWSERS="${INSTALL_PLAYWRIGHT_BROWSERS}" \
     install-openclaw-extensions
 
+RUN mkdir -p /opt/openclaw-bun-extensions \
+  && cp /tmp/openclaw-extensions/bun/package.json \
+    /tmp/openclaw-extensions/bun/bun.lock \
+    /opt/openclaw-bun-extensions/ \
+  && cd /opt/openclaw-bun-extensions \
+  && bun install --frozen-lockfile --production
+
 RUN mkdir -p /data \
   /opt/openclaw-extensions \
   /opt/playwright-browsers \
@@ -81,7 +93,7 @@ RUN chmod +x /opt/railclaw/bin/railclaw.js
 
 ENV HOME=/home/node \
   NPM_CONFIG_PREFIX=/opt/openclaw-extensions \
-  PATH=/opt/openclaw-extensions/bin:$PATH \
+  PATH=/opt/openclaw-bun-extensions/node_modules/.bin:/opt/openclaw-extensions/bin:$PATH \
   OPENCLAW_HOME=/home/node \
   OPENCLAW_STATE_DIR=/data/.openclaw \
   OPENCLAW_CONFIG_DIR=/data/.openclaw \
