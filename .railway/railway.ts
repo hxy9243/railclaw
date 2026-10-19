@@ -17,7 +17,8 @@ export default defineRailway(() => {
     },
     deploy: {
       healthcheckPath: "/healthz",
-      healthcheckTimeout: 300,
+      healthcheckTimeout: 600,
+      drainingSeconds: 330,
       restartPolicyType: "ON_FAILURE",
       restartPolicyMaxRetries: 10,
     },

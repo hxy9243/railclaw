@@ -33,6 +33,7 @@ const REQUIRED_FILES = [
   'bin/railclaw.js',
   'src/cli/index.js',
   'src/container/entrypoint.js',
+  'src/container/lifecycle.js',
   'README.md',
   'AGENTS.md',
   'skills/BOOTSTRAP.md',
@@ -80,7 +81,10 @@ export async function validateRepository({ root = repoRoot() } = {}) {
   requireContains(dockerfile, 'OPENCLAW_WORKSPACE_DIR=/data/workspace', 'Dockerfile must pin workspace to /data', failures);
   requireContains(dockerfile, 'src/container/entrypoint.js', 'Dockerfile must use the Railclaw container entrypoint', failures);
   const entrypoint = await read(root, 'src/container/entrypoint.js');
-  requireContains(entrypoint, "await runCommand('openclaw', ['doctor', '--fix']", 'Container entrypoint must repair OpenClaw config before startup', failures);
+  const lifecycle = await read(root, 'src/container/lifecycle.js');
+  requireContains(entrypoint, 'process.exitCode = await runContainer(', 'Container entrypoint must supervise startup and shutdown', failures);
+  requireMatch(entrypoint, /doctor:\s*\{\s*command: 'openclaw',\s*args: \['doctor', '--fix'\]/, 'Container entrypoint must repair OpenClaw config before startup', failures);
+  requireMatch(lifecycle, /await prepare\(\)[\s\S]*await run\(doctor\)[\s\S]*await run\(gateway\)/, 'Container lifecycle must prepare and finish doctor before starting gateway', failures);
   requireContains(railway, '"healthcheckPath": "/healthz"', 'Railway healthcheck must use /healthz', failures);
   requireContains(railwayTemplate, 'volume("openclaw-volume"', 'Railway IaC must define the OpenClaw volume', failures);
   requireContains(railwayTemplate, '"/data": data', 'Railway IaC must mount the volume at /data', failures);
