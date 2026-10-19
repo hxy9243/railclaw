@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
 import railwayTemplate from '../.railway/railway.ts';
 
 test('Railway IaC template mounts the OpenClaw volume at /data', async () => {
@@ -20,4 +21,14 @@ test('Railway IaC template mounts the OpenClaw volume at /data', async () => {
   assert.equal(service.variables.RAILWAY_RUN_UID.value, '0');
   assert.equal(service.volumeAttachments['openclaw-volume'].mountPath, '/data');
   assert.equal(volume.config.sizeMB, 50_000);
+});
+
+
+test('Railway JSON uses numeric startup and shutdown budgets matching IaC', async () => {
+  const config = JSON.parse(await fs.readFile(new URL('../railway.json', import.meta.url), 'utf8'));
+  const service = railwayTemplate().resources.find(resource => resource.name === 'openclaw');
+  assert.equal(config.deploy.healthcheckTimeout, 600);
+  assert.equal(config.deploy.drainingSeconds, 330);
+  assert.equal(config.deploy.healthcheckTimeout, service.deploy.healthcheckTimeout);
+  assert.equal(config.deploy.drainingSeconds, service.deploy.drainingSeconds);
 });
