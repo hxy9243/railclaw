@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "description": "Locked user-facing tools included in the OpenClaw image",
   "dependencies": {
-    "@anthropic-ai/claude-code": "2.1.309",
-    "@google/gemini-cli": "0.65.0",
-    "@openai/codex": "0.163.0",
-    "defuddle": "0.19.5",
+    "@anthropic-ai/claude-code": "2.1.312",
+    "@google/gemini-cli": "0.66.0",
+    "@openai/codex": "0.166.0",
+    "defuddle": "0.19.6",
     "obsidian-headless": "0.0.14",
     "playwright": "1.64.1"
   }
